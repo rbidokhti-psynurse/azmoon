@@ -12,8 +12,13 @@
     <style>
         body { 
             font-family: 'Vazirmatn', sans-serif; 
-            background-color: #f3e8ff; /* A light purple fallback */
-            background-image: linear-gradient(to bottom right, #f3e8ff, #e9d5ff, #d8b4fe);
+            background-color: #f3f4f6; /* A neutral fallback */
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253, 100%, 95%, 1) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(280, 100%, 90%, 1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, hsla(240, 100%, 90%, 1) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, hsla(300, 100%, 95%, 1) 0px, transparent 50%);
+            background-attachment: fixed; /* Keep the gradient fixed during scroll */
         }
         .hidden { display: none; }
         .card { 
@@ -23,29 +28,48 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 1.5rem; 
             box-shadow: 0 20px 30px -10px rgba(109, 40, 217, 0.2); 
-            padding: 2.5rem; 
+            padding: 1.5rem; /* Base padding for mobile */
             transition: all 0.3s ease-in-out; 
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .card {
+                padding: 2.5rem; /* Larger padding for larger screens */
+            }
         }
         .btn { 
             padding: 0.75rem 1.5rem; 
             border-radius: 0.75rem; 
             font-weight: 700; 
             color: white; 
-            transition: all 0.3s ease; 
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-position 0.4s ease;
             cursor: pointer; 
             display: inline-flex; 
             align-items: center; 
             justify-content: center;
             border: none;
-            box-shadow: 0 4px 15px -3px rgba(0,0,0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            position: relative;
         }
-        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .btn:disabled { 
+            background-image: none;
+            background-color: #9ca3af; 
+            cursor: not-allowed; 
+            box-shadow: none;
+        }
         .btn-primary { 
-            background-image: linear-gradient(to right, #8b5cf6, #7c3aed);
+            background-image: linear-gradient(to right, #8b5cf6, #7c3aed, #a78bfa, #8b5cf6);
+            background-size: 200% auto;
+            background-position: 0% 0%;
         }
         .btn-primary:hover:not(:disabled) { 
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -5px rgba(124, 58, 237, 0.5);
+            background-position: 100% 0%;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.4), 0 4px 6px -2px rgba(124, 58, 237, 0.2);
+        }
+        .btn:active:not(:disabled) {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .input-field { 
             width: 100%; 
@@ -62,15 +86,16 @@
         }
         .option { 
             border: 2px solid #e5e7eb; 
-            padding: 1rem; 
+            padding: 0.75rem; 
             border-radius: 0.75rem; 
             cursor: pointer; 
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
             background-color: rgba(255, 255, 255, 0.4);
         }
         .option:hover { 
             border-color: #8b5cf6; 
             background-color: #f5f3ff; 
+            transform: translateY(-2px) scale(1.01);
         }
         .option.selected { 
             background-color: #ede9fe; 
@@ -84,63 +109,67 @@
         #ai-consultation-content { font-size: 1.1rem; line-height: 1.9; }
         #ai-consultation-content ul { list-style-type: disc; padding-right: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
         #ai-consultation-content li { margin-bottom: 0.5rem; }
-        .admin-tab-btn.active { background-color: #f5f3ff; color: #7c3aed; font-weight: 700; }
+        .admin-tab-btn.active { 
+            background-color: #581c87; /* A darker purple for active state in dark sidebar */
+            color: white;
+        }
+        .payment-subtab-btn.active {
+            border-color: #8b5cf6;
+            color: #8b5cf6;
+        }
+        .loading-dots span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #8b5cf6;
+            border-radius: 50%;
+            animation: pulse 1.4s infinite ease-in-out both;
+        }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0); } 
+            40% { transform: scale(1.0); }
+        }
+        /* New Animation Styles */
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+            opacity: 0;
+        }
+        .animate-stagger-item {
+            opacity: 0;
+            animation: slideUp 0.5s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        #progress-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen py-8">
+<body class="flex items-center justify-center min-h-screen py-4 sm:py-8">
 
-    <div id="main-container" class="w-full max-w-5xl mx-auto p-4">
+    <div id="main-container" class="w-full max-w-5xl mx-auto p-2 sm:p-4">
         <!-- All views will be dynamically rendered here -->
     </div>
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, doc, setDoc, where, getDoc, Timestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, doc, setDoc, where, getDoc, Timestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
 
         // --- CONFIGURATION ---
         const ADMIN_EMAIL = "rbidokhti@gmail.com";
-        const allQuizzes = {
-            'ertebat_darmani_1404': {
-                title: 'آزمون مبحثی-ارتباط درمانی',
-                price: 100000,
-                duration: 20,
-                questionDuration: 60,
-                questions: [
-                    { question: "کدام یک از عوامل زیر، پایه و اساس رابطه درمانی بین پرستار و بیمار است؟", options: ["احترام متقابل", "برقراری اعتماد", "همدلی با بیمار", "ایجاد تفاهم"], correctAnswer: 1, explanation: "اعتماد، سنگ بنای اصلی یک رابطه درمانی است. بدون وجود اعتماد، بیمار احساس امنیت کافی برای به اشتراک گذاشتن اطلاعات و احساسات خود نخواهد داشت." },
-                    { question: "پرستار کدام اقدام از سوی بیمار را در مرحله‌ی کارِ رابطه‌ی پرستار-بیمار انتظار دارد؟", options: ["بیمار بینش پیدا کرده و رفتارهای جایگزین را به کار می‌گیرد.", "بیمار با پرستار به تفاهم رسیده و به‌طور مشترک اهداف درمانی را تعیین می‌کنند.", "بیمار احساسات خود را درباره بازگشت به جامعه بررسی می‌کند.", "بیمار نقاط قوت و ضعف شخصی که بر انتخاب‌های رفتاری‌اش تأثیر می‌گذارد را مورد بررسی قرار می‌دهد."], correctAnswer: 0, explanation: "مرحله کار (Working Phase)، مرحله اصلی و فعال رابطه درمانی است. در این مرحله، بیمار پس از ایجاد اعتماد، مشکلات خود را به طور عمیق بررسی کرده، به بینش می‌رسد و مهم‌تر از همه، شروع به تمرین و به کارگیری رفتارهای جدید و سالم‌تر می‌کند." },
-                    { question: "پرستار از مددجویی که فرزندش را در تصادف رانندگی از دست داده است، مراقبت می‌کند. مددجو می­گوید: «دیگر نمی‌خواهم به این زندگی ادامه دهم». کدام جمله‌ی پرستار نشان­دهنده همدلی با مددجو است؟", options: ["«این وضعیت بسیار غم‌انگیز است، اما زمان همه­چیز را حل می­کند.»", "«تو ناراحتی، اما باید به خاطر فرزندان دیگرت قوی باشی.»", "«وقتی احساساتت را با گریه کردن نشان دهی، اوضاع خیلی بهتر خواهد شد.»", "«باید وحشتناک باشد که فرزندت را از دست داده‌ای. من پیشت می‌مانم تا شوهرت برسد.»"], correctAnswer: 3, explanation: "همدلی به معنای درک و بازتاب احساسات بیمار بدون قضاوت یا ارائه راه‌حل‌های ساده‌انگارانه است. این پاسخ، درد و وحشت بیمار را تأیید می‌کند (باید وحشتناک باشد) و با ارائه حضور حمایتی (من پیشت می‌مانم)، به بیمار احساس امنیت و درک شدن می‌دهد." },
-                    { question: "مددجو به پرستار می­گوید: «پدرم اغلب مرا تنبیه بدنی می‌کرد». پرستار در پاسخ می­گوید: «پدر شما یک تنبیه‌کننده سخت‌گیر بوده است». پرستار از کدام تکنیک ارتباط­درمانی استفاده کرده است؟", options: ["بیان مجدد", "ارائه هدایت کلی", "جستجوی تصریح و صحت", "تصدیق کردن"], correctAnswer: 0, explanation: "بیان مجدد (Restating) به معنای تکرار کردن ایده اصلی صحبت بیمار با کلماتی متفاوت است. این تکنیک به بیمار نشان می‌دهد که پرستار به حرف‌های او گوش داده و آن‌ها را درک کرده است و او را تشویق به ادامه صحبت می‌کند." },
-                    { question: "مددجویی به دنبال تجاوز جنسی، مبتلا به اختلال استرس پس از تروما تشخیص داده شده است. کدام گفته­ی پرستار، نشان­دهنده تکنیک ارتباط­درمانی «گشایش سخن» است؟", options: ["«قبل از تجاوز چه اتفاقی افتاد و شما چه زمانی به بخش اورژانس مراجعه کردید؟»", "«دوست دارید در مورد چه چیزی صحبت کنید؟»", "«متوجه می‌شوم که شما در مورد این موضوع احساس ناراحتی می‌کنید»", "«چگونه می‌توانم به شما کمک کنم؟»"], correctAnswer: 1, explanation: "گشایش سخن (Broad Opening) یک تکنیک است که به بیمار اجازه می‌دهد تا خودش موضوع بحث را انتخاب کند و کنترل گفتگو را در دست بگیرد. این کار به بیمار احساس امنیت می‌دهد و نشان می‌دهد که پرستار آماده شنیدن هر موضوعی است که برای بیمار اهمیت دارد." },
-                    { question: "کدام مورد، به واکنش‌های رفتاری و هیجانی پرستار نسبت به یک مددجو اشاره دارد که می­تواند مرتبط با احساسات حل‌­نشده نسبت به افراد مهم در گذشته­ی پرستار باشند؟", options: ["ابراز احساسات تحقیرکننده", "همدردی", "انتقال متقابل", "انتقال"], correctAnswer: 2, explanation: "انتقال متقابل (Countertransference) به واکنش‌های ناخودآگاه پرستار به بیمار اطلاق می‌شود که ریشه در تجربیات و روابط گذشته خود پرستار دارد. تشخیص این احساسات برای حفظ یک رابطه درمانی حرفه‌ای ضروری است." },
-                    { question: "در مرحله ................. از ارتباط پرستار-مددجو، پرستار احساسات و اضطراب­های خود را مورد بررسی قرار می­دهد.", options: ["پیش­تعامل", "مقدماتی", "کار", "خاتمه"], correctAnswer: 0, explanation: "مرحله پیش‌تعامل (Pre-interaction) تنها مرحله‌ای است که قبل از اولین ملاقات با بیمار رخ می‌دهد. در این مرحله، پرستار با بررسی اطلاعات موجود و مهم‌تر از آن، با کاوش در احساسات، ترس‌ها و اضطراب‌های خود، برای یک تعامل درمانی موثر آماده می‌شود." },
-                    { question: "کدام اظهار پرستار نشان می‌دهد که وی نسبت به مددجویی که اقدام به خودکشی کرده است، همدلی دارد؟", options: ["«حتماً هنگامی که سعی کردی به خودت آسیب بزنی، بسیار ناراحت بوده‌ای.»", "«دیدن این که تو چنین تجربه سختی را گذرانده­ای، مرا غمگین می‌کند.»", "«اگر به من بگویی که مشکلت چیست، می‌توانم به حل مشکلاتت کمک کنم.»", "«خودکشی یک راه‌حل افراطی برای مشکلی است که شاید آن­چنان هم جدی نباشد.»"], correctAnswer: 0, explanation: "این جمله درد و ناامیدی عمیق بیمار را که منجر به اقدام به خودکشی شده، به رسمیت می‌شناسد و آن را تأیید می‌کند. این همدلی است. در مقابل، گزینه 'ب' همدردی (Sympathy) است که بر احساسات خود پرستار تمرکز دارد." },
-                    { question: "در کدام مرحله از رابطه پرستار-مددجو، می‌توان انتظار داشت که مسائل شناسایی‌شده­ی بیمار مورد بررسی و حل و فصل قرار می­گیرد؟", options: ["Preorientation", "Orientation", "Working", "Termination"], correctAnswer: 2, explanation: "مرحله کار (Working Phase)، قلب رابطه درمانی است. در این مرحله، پس از ایجاد اعتماد و تعیین اهداف در مرحله مقدماتی (Orientation)، پرستار و بیمار به طور فعال برای بررسی عمیق مسائل و یافتن راه‌حل‌های موثر با یکدیگر همکاری می‌کنند." },
-                    { question: "بیمار سایکوتیک به پرستار می‌گوید: «فکر می‌کنم همه مرا زیر نظر دارند و قصد آسیب رساندن به من دارند». پرستار پاسخ می‌دهد: «این طرز فکر غیرواقعی است؛ بیا در مورد این موضوع صحبت نکنیم». کدام شیوه غیردرمانی مشهود است؟", options: ["استفاده از انکار", "نصیحت کردن", "رد کردن", "عدم تایید"], correctAnswer: 2, explanation: "رد کردن (Rejecting) یک مانع ارتباطی است که در آن پرستار از بحث در مورد یک موضوع مهم برای بیمار امتناع می‌کند. این کار باعث می‌شود بیمار احساس کند که افکار و نگرانی‌هایش بی‌اهمیت تلقی شده است." },
-                    { question: "مددجویی که دوره درمان خود را به خوبی طی کرده و در حال ترخیص از بیمارستان است، یک کتاب به پرستار هدیه می­دهد و می‌گوید: «از شما خیلی ممنونم که در این مدت از من حمایت کردید و به بهبودی من کمک کردید». مناسب‌ترین پاسخ پرستار چیست؟", options: ["«من از بیماران هدیه­ی شخصی قبول نمی‌کنم.»", "«از محبت شما ممنونم؛ اینکه تلاش‌هایم مورد قدردانی قرار گرفته برایم ارزشمند است.»", "«نیازی به تشکر نیست، این وظیفه من است.»", "«ممنونم؛ این کتاب را به کتابخانه بیمارستان اضافه می‌کنم تا دیگران هم از آن استفاده کنند.»"], correctAnswer: 1, explanation: "پذیرش یک هدیه کوچک و مناسب در مرحله خاتمه، ضمن رعایت سیاست‌های مرکز درمانی، می‌تواند راهی برای تأیید رابطه درمانی مثبت و قدردانی از تلاش‌های بیمار باشد. رد کردن هدیه ممکن است به عنوان رد کردن خود بیمار تفسیر شود." },
-                    { question: "پرستاری می‌گوید: «من تنها کسی هستم که واقعاً این بیمار را درک می‌کنم. بقیه اعضای کادر، خیلی با او انتقادی برخورد می‌کنند». این اظهارات پرستار نشان‌دهنده چیست؟", options: ["نقص مرزها", "آزار جنسی", "توجه مثبت", "حمایت"], correctAnswer: 0, explanation: "این طرز فکر که 'فقط من بیمار را درک می‌کنم'، یک نشانه کلاسیک از نقص مرزهای حرفه‌ای (Boundary Violation) است. این امر می‌تواند منجر به درگیری بیش از حد عاطفی و ایجاد یک رابطه 'خاص' و غیردرمانی شود که به ضرر بیمار و تیم درمانی است." },
-                    { question: "اگر مددجویی نسبت به پرستار انتقال (transference) نشان دهد، پرستار باید چگونه پاسخ دهد؟", options: ["ایمنی را حفظ کرده و بلافاصله رابطه با مددجو را خاتمه دهد.", "مددجو را تشویق کند که این افکار و احساسات را نادیده بگیرد.", "بلافاصله مددجو را به عضو دیگری از کادر درمان واگذار کند.", "به مددجو کمک کند تا معنای رابطه را بر اساس شرایط فعلی روشن کند."], correctAnswer: 3, explanation: "انتقال یک فرصت درمانی است. بهترین اقدام این است که پرستار به بیمار کمک کند تا بفهمد این احساسات ممکن است مربوط به روابط گذشته او باشد و آن‌ها را در بستر رابطه درمانی فعلی ('اینجا و اکنون') بررسی کند. این کار به افزایش بینش بیمار کمک می‌کند." },
-                    { question: "مددجویی در بخش روان‌پزشکی، در گروه­درمانی به خانم ل. یکی از اعضای گروه توهین می‌کند و او را با لفظ «به درد نخور» خطاب می‌کند. پرستار قصد دارد به این مددجو بازخورد مناسبی بدهد. پرستار باید چگونه پاسخ دهد؟", options: ["«رفتار تو در گروه­درمانی خیلی توهین‌آمیز و بی‌ادبانه بود.»", "«وقتی امروز در گروه­درمانی خانم ل. را «به درد نخور» خطاب کردی ناراحت شد.»", "«تو همیشه با دیگران برخورد نادرستی داری و این باید تغییر کند.»", "«تو نباید به کسی توهین کنی. این کار اصلاً درست نیست.»"], correctAnswer: 1, explanation: "بازخورد درمانی باید توصیفی، مشخص، و غیرقضاوتی باشد. این پاسخ به طور دقیق رفتار مشاهده شده ('خطاب کردن با لفظ به درد نخور') و تأثیر آن بر دیگری ('ناراحت شد') را بیان می‌کند، بدون اینکه شخصیت فرد را مورد حمله قرار دهد." },
-                    { question: "کدام ویژگی در گوش دادن فعال نقش مثبت و مهمی دارد؟", options: ["گوش دادن به بیمار برای دریافت اطلاعات مورد نظر خود", "ایجاد فضایی که در آن بیمار بتواند به راحتی صحبت کند و احساس پذیرش نماید", "پاسخ دادن سریع به هر جمله بیمار جهت بازخورد مناسب", "بی‌توجهی به زبان بدن بیمار و تمرکز عمیق بر صحبت‌های وی"], correctAnswer: 1, explanation: "جوهر اصلی گوش دادن فعال، ایجاد یک محیط امن، پذیرا و بدون قضاوت است. در چنین فضایی، بیمار احساس راحتی می‌کند تا افکار و احساسات واقعی خود را بیان کند، که این امر اساس هر مداخله درمانی موفقی است." },
-                    { question: "کدام وظیفه پرستار در مرحله کار ارتباط با مددجو، بالاترین اولویت را دارد؟", options: ["ایجاد قرارداد برای مداخله", "بررسی احساسات خود در مورد کار کردن با یک بیمار خاص", "ایجاد برنامه‌ای برای ادامه مراقبت‌های بعد از درمان", "ارتقاء بینش و درک بیمار از واقعیت"], correctAnswer: 3, explanation: "اولویت اصلی در مرحله کار، کمک به بیمار برای درک عمیق‌تر مشکلات، الگوهای رفتاری و احساسات خود است. ارتقاء بینش نسبت به واقعیت، کلید اصلی توانمندسازی بیمار برای ایجاد تغییرات پایدار است." },
-                    { question: "انتقال (Transference)در یک رابطه­ی درمانی چه زمانی اتفاق می‌افتد؟", options: ["وقتی که بیمار به‌طور آگاهانه احساسات خود را به پرستار منتقل می‌کند.", "وقتی بیمار ناخودآگاه احساسات شکل‌گرفته نسبت به فردی از گذشته را به پرستار منتقل می‌کند.", "وقتی بیمار احساسات خشم و خصومت را نسبت به پرستار بروز می‌دهد.", "وقتی پرستار بیمار را با شخصی از گذشته خود اشتباه می‌گیرد."], correctAnswer: 1, explanation: "این تعریف کلاسیک انتقال است. این یک فرآیند ناخودآگاه است که در آن بیمار، احساسات، نگرش‌ها و انتظاراتی را که نسبت به افراد مهم زندگی گذشته‌اش (مانند والدین) داشته، به پرستار فرافکنی می‌کند." },
-                    { question: "در طی مصاحبه، بیمار می­گوید: «احساس می‌کنم نمی‌تونم از پس مشکلات بر بیام». پرستار می­گوید: «این حس در گذشته هم به سراغت اومده؟ چطور با اون مقابله کردی؟». کدام تکنیک ارتباط­درمانی توسط پرستار استفاده شده است؟", options: ["تشویق به مقایسه", "تشویق به توصیف ادراکات", "کاوش کردن", "انعکاس"], correctAnswer: 0, explanation: "پرستار با پرسیدن در مورد تجربیات گذشته، بیمار را تشویق می‌کند تا شباهت‌ها و تفاوت‌های بین موقعیت فعلی و گذشته را بررسی کند. این تکنیک (Encouraging Comparison) می‌تواند به بیمار کمک کند تا از راهکارهای موفقی که در گذشته به کار برده، دوباره استفاده کند." },
-                    { question: "بیماری که تمایل به رفتارهای وابسته دارد و در آستانه طلاق است، به پرستار می‌گوید: «به نظر شما باید از شریک زندگی‌ام جدا شوم و زندگی مستقلی داشته باشم؟». کدام پاسخ پرستار مناسب‌تر است؟", options: ["«به نظرم این بهترین کار است تا استقلال خودت را افزایش دهی.»", "«چرا می‌خواهی از این رابطه خارج شوی؟»", "«بیا با هم تمامی گزینه‌های پیش رویت را بررسی و ارزیابی کنیم.»", "«احتمالاً با این کار احساس گناه شدیدی خواهی داشت.»"], correctAnswer: 2, explanation: "دادن توصیه مستقیم به بیمار وابسته، رفتار وابستگی او را تقویت می‌کند. بهترین رویکرد، توانمندسازی بیمار برای تصمیم‌گیری مستقل است. بررسی گزینه‌ها با هم، به بیمار کمک می‌کند تا خودش مزایا و معایب هر انتخاب را ببیند و مسئولیت تصمیمش را بپذیرد." },
-                    { question: "پرستار به مددجو می­گوید: «متوجه شدم وقتی درباره پدرت صحبت می‌کنی، صدایت آهسته‌تر و چهره‌ات غمگین می‌شود». پرستار کدام تکنیک ارتباط­درمانی را به‌کار برده است؟", options: ["Giving advice (نصیحت کردن)", "Reflecting (انعکاس دادن)", "Making observations (مشاهده کردن)", "Verbalizing the implied (بیان ضمنی‌ها)"], correctAnswer: 2, explanation: "تکنیک مشاهده کردن (Making Observations) شامل بیان کردن رفتارهای غیرکلامی بیمار (مانند لحن صدا یا حالت چهره) بدون قضاوت است. این کار به بیمار کمک می‌کند تا از رفتار خود آگاه شود و ممکن است او را به صحبت در مورد احساسات زمینه‌ای تشویق کند." }
-                ]
-            },
-            'demo_quiz_1404': {
-                title: 'آزمون دمو (رایگان)',
-                price: 0, // رایگان
-                duration: 5,
-                questionDuration: 60,
-                questions: [
-                     { question: "پرستار در کدام مرحله از ارتباط، احساسات خود را بررسی می‌کند؟", options: ["پیش­تعامل", "مقدماتی", "کار", "خاتمه"], correctAnswer: 0, explanation: "مرحله پیش‌تعامل قبل از اولین ملاقات با بیمار رخ می‌دهد و پرستار برای تعامل موثر آماده می‌شود." },
-                     { question: "کدام تکنیک به بیمار اجازه می‌دهد موضوع بحث را انتخاب کند؟", options: ["بیان مجدد", "گشایش سخن", "انعکاس", "تمرکز کردن"], correctAnswer: 1, explanation: "گشایش سخن (Broad Opening) به بیمار کنترل گفتگو را می‌دهد و احساس امنیت ایجاد می‌کند." }
-                ]
-            }
-        };
         
         // --- PAYMENT INFO ---
         const PAYMENT_INFO = {
@@ -150,31 +179,56 @@
         
         // --- FIREBASE SETUP ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBgVWwZvSTeT55dC8wrNqETTvqOAzmdehM",
-            authDomain: "psynurse-90668.firebaseapp.com",
-            projectId: "psynurse-90668",
-            storageBucket: "psynurse-90668.appspot.com",
-            messagingSenderId: "165307921506",
-            appId: "1:165307921506:web:640b307855ebc26bc44d3b"
+          apiKey: "AIzaSyDM8TDS86QLxRypLLB1Mb0CIgS1CUVines",
+          authDomain: "psynurse-70d4c.firebaseapp.com",
+          projectId: "psynurse-70d4c",
+          storageBucket: "psynurse-70d4c.firebasestorage.app",
+          messagingSenderId: "399051000395",
+          appId: "1:399051000395:web:10370b3be2eaca39385bce",
+          measurementId: "G-WV9K9QZN9M"
         };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-quiz-app';
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const analytics = getAnalytics(app);
 
         // --- STATE & GLOBAL VARS ---
         let currentUser = null;
         let userProfile = null;
         let userPayments = [];
+        let quizSettings = {};
+        let discounts = [];
+        let allQuizzes = {}; // Will be populated from Firestore
         let unsubscribeAdminListener = null;
         let unsubscribeUserPaymentsListener = null;
+        let unsubscribeQuizSettingsListener = null;
+        let unsubscribeDiscountsListener = null;
+        let unsubscribeQuizzesListener = null; // New listener
         let quizState = {};
         let resultPieChartInstance = null;
         let progressChartInstance = null;
         const mainContainer = document.getElementById('main-container');
 
         // --- UTILITY & AI FUNCTIONS ---
+        
+        function sanitizeObjectKeys(obj) {
+            // FIX: Check if the object is a Firestore Timestamp and return it as is to preserve its methods.
+            if (obj && typeof obj.toMillis === 'function' && obj.hasOwnProperty('seconds') && obj.hasOwnProperty('nanoseconds')) {
+                return obj;
+            }
+            if (obj === null || typeof obj !== 'object') return obj;
+            if (Array.isArray(obj)) return obj.map(item => sanitizeObjectKeys(item));
+            const newObj = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    const trimmedKey = key.trim();
+                    newObj[trimmedKey] = sanitizeObjectKeys(obj[key]);
+                }
+            }
+            return newObj;
+        }
+        
         const toggleButtonLoading = (button, isLoading, originalText) => {
             if(!button) return;
             if (isLoading) {
@@ -188,173 +242,152 @@
         
         async function getAIAnalysis(resultData) {
             const quizData = allQuizzes[resultData.quizId];
-            const incorrectQuestions = resultData.answers
-                .map((answer, index) => {
-                    if (answer !== null && answer !== quizData.questions[index].correctAnswer) {
-                        return `سوال: "${quizData.questions[index].question}"`;
-                    }
-                    return null;
-                })
-                .filter(q => q !== null)
-                .join('\n');
+            const incorrectQuestions = resultData.answers.map((answer, index) => {
+                if (answer !== null && answer !== quizData.questions[index].correctAnswer) return `سوال: "${quizData.questions[index].question}"`;
+                return null;
+            }).filter(q => q !== null).join('\n');
 
-            const systemPrompt = "شما یک مشاور تحصیلی برجسته و متخصص در زمینه آزمون‌های پرستاری روان هستید. تحلیل شما باید کاملاً حرفه‌ای، حمایتگرانه، دقیق و شخصی‌سازی شده باشد. تحلیل خود را به زبان فارسی ارائه دهید و مستقیماً دانشجو را خطاب قرار دهید. از به کار بردن ایموجی خودداری کن.";
-            const userQuery = `
-                یک دانشجوی پرستاری به نام "${resultData.name}" در "${quizData.title}" شرکت کرده است. عملکرد او:
-                - درصد: ${resultData.percentage.toFixed(2)}%
-                - صحیح: ${resultData.correct}, غلط: ${resultData.incorrect}, بی‌پاسخ: ${resultData.unanswered}
-                لیست سوالات غلط:
-                ${incorrectQuestions || "به هیچ سوالی پاسخ اشتباه نداده است."}
+            const systemPrompt = `
+                شما یک مشاور تحصیلی برجسته و متخصص در زمینه آزمون‌های پرستاری روان هستید. تحلیل شما باید کاملاً حرفه‌ای، حمایتگرانه، دقیق و شخصی‌سازی شده باشد. تحلیل خود را به زبان فارسی ارائه دهید و مستقیماً دانشجو را خطاب قرار دهید. از به کار بردن ایموجی خودداری کن.
 
-                وظیفه شما:
-                1. یک عنوان جذاب و انگیزشی برای تحلیل بنویس.
-                2. عملکرد کلی او را در یک پاراگراف کامل تحلیل کن.
-                3. چند حوزه کلیدی برای مطالعه بیشتر را شناسایی کن.
-                4. چند راهکار عملی و مشخص (به صورت bullet point) ارائه بده.
-                5. در انتها یک پیام انگیزشی بنویس.
+                **قوانین بسیار مهم که باید رعایت کنی:**
+                ۱. **ارجاع به کتاب:** اگر نیاز به معرفی منبع برای مطالعه بیشتر بود، **فقط و فقط** از کتاب‌های زیر استفاده کن و برای هر موضوع به فصل مربوطه ارجاع بده:
+                   - "اصول روان پرستاری و بهداشت روان تاوسند"
+                   - "کتاب تست اوج روان"
+                ۲. **ارجاع برای مشاوره:** اگر نیاز به ارجاع برای برنامه‌ریزی درسی و مشاوره آزمون ارشد بود، دانشجو را به **"آکادمی مسیر (سرکار خانم کلیج)"** ارجاع بده.
+                ۳. **ممنوعیت مقیاس‌ها:** به هیچ عنوان به مقیاس‌های روانشناسی (مانند مقیاس اضطراب بک و...) ارجاع نده.
+                ۴. **تشویق به آزمون:** در انتهای تحلیل، دانشجو را تشویق کن تا با توجه به شرایط و نقاط ضعف خود، در سایر آزمون‌های موجود در پلتفرم نیز شرکت کند.
             `;
+            const userQuery = `یک دانشجوی پرستاری به نام "${resultData.name}" در "${quizData.title}" شرکت کرده است. عملکرد او: - درصد: ${resultData.percentage.toFixed(2)}% - صحیح: ${resultData.correct}, غلط: ${resultData.incorrect}, بی‌پاسخ: ${resultData.unanswered}. لیست سوالات غلط: ${incorrectQuestions || "به هیچ سوالی پاسخ اشتباه نداده است."}. وظیفه شما: 1. یک عنوان جذاب و انگیزشی برای تحلیل بنویس. 2. عملکرد کلی او را در یک پاراگراف کامل تحلیل کن. 3. چند حوزه کلیدی برای مطالعه بیشتر را شناسایی کن. 4. چند راهکار عملی و مشخص (به صورت bullet point) ارائه بده. 5. در انتها یک پیام انگیزشی بنویس و قوانین مهم را رعایت کن.`;
 
             try {
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                };
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`API call failed`);
+                // This is a more robust way to construct the URL that allows the platform's automatic key injection to work correctly.
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent`;
+                const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
                 const result = await response.json();
                 let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (text) {
-                    text = text.replace(/\n{2,}/g, '<br><br>').replace(/\*/g, '• ');
-                    return text;
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    let htmlContent = '', inList = false;
+                    lines.forEach((line, index) => {
+                        line = line.trim();
+                        const isListItem = line.startsWith('*') || line.startsWith('•');
+                        if (!isListItem && inList) { htmlContent += '</ul>'; inList = false; }
+                        if (isListItem && !inList) { htmlContent += '<ul class="list-disc list-inside space-y-2 mb-3">'; inList = true; }
+                        if (index === 0 && !isListItem) htmlContent += `<h3 class="text-xl font-bold text-gray-800 mb-4">${line.replace(/#+\s*/, '')}</h3>`;
+                        else if (isListItem) htmlContent += `<li>${line.substring(1).trim()}</li>`;
+                        else htmlContent += `<p class="mb-3">${line}</p>`;
+                    });
+                    if (inList) htmlContent += '</ul>';
+                    return htmlContent;
                 }
-                return "متاسفانه در حال حاضر امکان ارائه تحلیل هوشمند وجود ندارد. <button id='retry-ai-btn' class='btn btn-primary text-sm py-1 px-2 mt-2'>تلاش مجدد</button>";
+                throw new Error("No text received from API");
             } catch (error) {
-                console.error("Error fetching AI analysis:", error);
-                return "خطا در ارتباط با سرویس تحلیل هوشمند. <button id='retry-ai-btn' class='btn btn-primary text-sm py-1 px-2 mt-2'>تلاش مجدد</button>";
+                console.error("AI analysis failed:", error);
+                return null; // Return null on failure
             }
         }
-
 
         // --- VIEW RENDERING ENGINE ---
         const renderView = (viewName, props = {}) => {
             mainContainer.innerHTML = '';
             let viewContent = '';
+            
+            // This switch generates the HTML content only when needed, preventing premature errors.
             switch(viewName) {
-                case 'loading': viewContent = `<div class="card text-center"><p class="text-lg font-semibold">در حال بارگذاری...</p></div>`; break;
+                 case 'loading':
+                    viewContent = `<div class="card text-center flex flex-col items-center justify-center gap-4"><div class="loading-dots"><span></span><span></span><span></span></div><p class="text-lg font-semibold text-gray-700">در حال بارگذاری...</p></div>`;
+                    break;
                 case 'auth':
-                    viewContent = `
-                        <div class="card max-w-md mx-auto">
-                            <div class="flex justify-center mb-6 border-b"><button id="login-tab-btn" class="tab-btn active">ورود</button><button id="register-tab-btn" class="tab-btn">ثبت نام</button></div>
-                            <form id="login-form"><div class="space-y-4"><input type="email" id="login-email" class="input-field" placeholder="ایمیل" required><div class="relative"><input type="password" id="login-password" class="input-field" placeholder="رمز عبور" required><span class="toggle-password-visibility absolute inset-y-0 left-0 flex items-center pl-3 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></span></div></div><button type="submit" id="login-submit-btn" class="btn btn-primary w-full mt-6">ورود</button><p id="login-error" class="text-red-500 mt-4 h-5 text-center"></p></form>
-                            <form id="register-form" class="hidden"><div class="space-y-4"><input type="text" id="register-name" class="input-field" placeholder="نام و نام خانوادگی" required><input type="tel" id="register-phone" class="input-field" placeholder="شماره تماس (مثال: 09123456789)" required><input type="email" id="register-email" class="input-field" placeholder="ایمیل" required><div class="relative"><input type="password" id="register-password" class="input-field" placeholder="رمز عبور (حداقل ۶ کاراکتر)" required><span class="toggle-password-visibility absolute inset-y-0 left-0 flex items-center pl-3 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></span></div><div class="relative"><input type="password" id="register-password-confirm" class="input-field" placeholder="تکرار رمز عبور" required><span class="toggle-password-visibility absolute inset-y-0 left-0 flex items-center pl-3 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></span></div>
-                                <p class="text-xs text-gray-500 pt-1 text-center">لطفا ایمیل و رمز عبور خود را جهت ورودهای مجدد به خاطر بسپارید.</p>
-                                </div><button type="submit" id="register-submit-btn" class="btn btn-primary w-full mt-6">ثبت نام</button><p id="register-error" class="text-red-500 mt-4 h-5 text-center"></p></form>
-                        </div>`;
+                    viewContent = `<div class="card max-w-md mx-auto animate-slide-up"><div class="flex justify-center mb-6 border-b"><button id="login-tab-btn" class="tab-btn active">ورود</button><button id="register-tab-btn" class="tab-btn">ثبت نام</button></div><form id="login-form"><div class="space-y-4"><input type="email" id="login-email" class="input-field" placeholder="ایمیل" required><div class="relative"><input type="password" id="login-password" class="input-field" placeholder="رمز عبور" required><span class="toggle-password-visibility absolute inset-y-0 left-0 flex items-center pl-3 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></span></div></div><button type="submit" id="login-submit-btn" class="btn btn-primary w-full mt-6">ورود</button><p id="login-error" class="text-red-500 mt-4 h-5 text-center"></p></form><form id="register-form" class="hidden"><div class="space-y-4"><input type="text" id="register-name" class="input-field" placeholder="نام و نام خانوادگی" required><input type="tel" id="register-phone" class="input-field" placeholder="شماره تماس (مثال: 09123456789)" required><input type="email" id="register-email" class="input-field" placeholder="ایمیل" required><div class="relative"><input type="password" id="register-password" class="input-field" placeholder="رمز عبور (حداقل ۶ کاراکتر)" required><span class="toggle-password-visibility absolute inset-y-0 left-0 flex items-center pl-3 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></span></div><div class="relative"><input type="password" id="register-password-confirm" class="input-field" placeholder="تکرار رمز عبور" required><span class="toggle-password-visibility absolute inset-y-0 left-0 flex items-center pl-3 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></span></div><p class="text-xs text-gray-500 pt-1 text-center">لطفا ایمیل و رمز عبور خود را جهت ورودهای مجدد به خاطر بسپارید.</p></div><button type="submit" id="register-submit-btn" class="btn btn-primary w-full mt-6">ثبت نام</button><p id="register-error" class="text-red-500 mt-4 h-5 text-center"></p></form></div>`;
                     break;
                 case 'studentDashboard':
-                    let adminButton = currentUser.email === ADMIN_EMAIL ? `<button id="show-admin-panel-btn" class="btn bg-gray-700 hover:bg-gray-800">ورود به پنل استاد</button>` : '';
-                    viewContent = `
-                        <div class="card">
-                            <div class="flex justify-between items-center mb-8"><div><h1 class="text-2xl font-bold text-gray-800">داشبورد شما</h1><p class="text-gray-600">خوش آمدید، ${userProfile.name}!</p></div><div class="flex gap-2">${adminButton}<button id="logout-student-btn" class="btn bg-red-500 hover:bg-red-600">خروج</button></div></div>
-                            <div id="progress-chart-container" class="mb-8 hidden"><h2 class="text-xl font-bold text-gray-700 mb-4">نمودار پیشرفت شما</h2><div class="p-4 bg-gray-50 rounded-lg"><canvas id="progressChart"></canvas></div></div>
-                            <div class="mb-8"><h2 class="text-xl font-bold text-gray-700 mb-4">آزمون‌های در دسترس</h2><div id="available-quizzes-container" class="p-4 bg-gray-50 rounded-lg"></div></div>
-                            <div><h2 class="text-xl font-bold text-gray-700 mb-4">آزمون‌های شرکت کرده</h2><div id="completed-quizzes-container" class="space-y-3"></div></div>
-                        </div>`;
+                    viewContent = `<div class="card animate-slide-up"><div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 text-center sm:text-right"><div><h1 class="text-2xl font-bold text-gray-800">داشبورد شما</h1><p class="text-gray-600">خوش آمدید، ${userProfile.name}!</p></div><div class="flex justify-center sm:justify-end gap-2">${currentUser.email === ADMIN_EMAIL ? `<button id="show-admin-panel-btn" class="btn bg-gray-700 hover:bg-gray-800">ورود به پنل استاد</button>` : ''}<button id="logout-student-btn" class="btn bg-red-500 hover:bg-red-600">خروج</button></div></div><div id="progress-chart-container" class="mb-8 hidden"><h2 class="text-xl font-bold text-gray-700 mb-4">نمودار پیشرفت شما</h2><div class="p-4 bg-gray-50 rounded-lg"><canvas id="progressChart"></canvas></div></div><div class="mb-8"><h2 class="text-xl font-bold text-gray-700 mb-4">آزمون‌های در دسترس</h2><div class="relative mb-4"><input type="text" id="quiz-search-input" class="input-field !pl-10" placeholder="جستجوی آزمون بر اساس نام یا مبحث..."><span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span></div><div id="available-quizzes-container" class="space-y-3"></div></div><div><h2 class="text-xl font-bold text-gray-700 mb-4">آزمون‌های شرکت کرده</h2><div id="completed-quizzes-container" class="space-y-3"></div></div></div>`;
                     break;
                 case 'adminDashboard':
-                    viewContent = `
-                        <div class="card">
-                             <div class="flex justify-between items-center mb-4 border-b pb-4">
-                                <h1 class="text-3xl font-bold text-gray-800">پنل استاد</h1>
-                                <button id="logout-admin-btn" class="btn bg-gray-600 hover:bg-gray-700">بازگشت به داشبورد</button>
-                            </div>
-                            <div class="flex">
-                                <div class="w-1/4 border-l pl-4">
-                                    <h2 class="text-xl font-bold mb-4">منو</h2>
-                                    <nav class="space-y-2">
-                                        <button data-tab="results" class="admin-tab-btn w-full text-right p-2 rounded-md hover:bg-purple-50 font-semibold">تحلیل نتایج</button>
-                                        <button data-tab="payments" class="admin-tab-btn w-full text-right p-2 rounded-md hover:bg-purple-50 font-semibold">مدیریت پرداخت‌ها</button>
-                                        <button data-tab="quizzes" class="admin-tab-btn w-full text-right p-2 rounded-md hover:bg-purple-50 font-semibold">مدیریت آزمون‌ها</button>
-                                        <button data-tab="discounts" class="admin-tab-btn w-full text-right p-2 rounded-md hover:bg-purple-50 font-semibold">مدیریت تخفیف‌ها</button>
-                                    </nav>
+                    viewContent = `<div class="card !p-0 overflow-hidden flex flex-col min-h-[85vh] animate-slide-up">
+                        <!-- Sidebar / Topbar -->
+                        <div class="w-full bg-gray-800 text-gray-200 p-4 md:p-5 flex-shrink-0">
+                            <!-- Unified Header -->
+                            <div class="flex items-center justify-between md:justify-start md:gap-3 mb-4 md:mb-8">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-purple-600 p-2 rounded-lg">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                    <h1 class="text-xl font-bold text-white">پنل استاد</h1>
                                 </div>
-                                <div id="admin-content" class="w-3/4 pr-4"></div>
+                                <!-- Mobile-only Back Button -->
+                                <button id="logout-admin-btn-mobile" class="md:hidden btn bg-purple-800 hover:bg-purple-700 !p-2 !rounded-lg">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                </button>
                             </div>
-                        </div>`;
+
+                            <nav class="flex flex-row md:flex-col md:space-y-2 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 gap-2">
+                                <button data-tab="results" class="admin-tab-btn flex-shrink-0 text-right flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 font-medium transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    <span class="hidden md:inline">تحلیل نتایج</span><span class="md:hidden">نتایج</span>
+                                </button>
+                                <button data-tab="payments" class="admin-tab-btn flex-shrink-0 text-right flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 font-medium transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                    <span class="hidden md:inline">مدیریت پرداخت‌ها</span><span class="md:hidden">پرداخت‌ها</span>
+                                </button>
+                                <button data-tab="quiz_management" class="admin-tab-btn flex-shrink-0 text-right flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 font-medium transition-colors">
+                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                    <span class="hidden md:inline">مدیریت آزمون‌ها</span><span class="md:hidden">آزمون‌ها</span>
+                                </button>
+                                <button data-tab="discounts" class="admin-tab-btn flex-shrink-0 text-right flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 font-medium transition-colors">
+                                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 8V5a2 2 0 012-2h2z"></path></svg>
+                                   <span class="hidden md:inline">مدیریت تخفیف‌ها</span><span class="md:hidden">تخفیف</span>
+                                </button>
+                                <button data-tab="prices" class="admin-tab-btn flex-shrink-0 text-right flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 font-medium transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1h4v1m-7 6h7m-3 6h3m-1 4v-2m-6-13a1 1 0 011-1h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"></path></svg>
+                                    <span class="hidden md:inline">مدیریت قیمت‌ها</span><span class="md:hidden">قیمت‌ها</span>
+                                </button>
+                            </nav>
+                            <div class="mt-auto pt-6 hidden md:block">
+                                <button id="logout-admin-btn" class="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-purple-800 hover:bg-purple-700 font-medium text-white transition-colors">
+                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                    <span>بازگشت به داشبورد</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Main Content -->
+                        <div class="flex-grow p-4 md:p-8 overflow-y-auto bg-gray-50" id="admin-content"></div>
+                    </div>`;
                     break;
                  case 'quiz':
                     const quizData = allQuizzes[props.quizId];
-                    viewContent = `<div class="card"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gray-800">سوال <span id="question-number">1</span> از ${quizData.questions.length}</h2><div class="flex items-center space-x-4 rtl:space-x-reverse"><div class="text-center"><div id="question-timer" class="text-lg font-bold text-red-600 bg-red-100 px-4 py-1 rounded-lg"></div><span class="text-xs text-gray-500">زمان سوال</span></div><div class="text-center"><div id="timer" class="text-lg font-bold text-purple-600 bg-purple-100 px-4 py-1 rounded-lg"></div><span class="text-xs text-gray-500">زمان کل</span></div></div></div><div class="w-full bg-gray-200 rounded-full h-2.5 mb-6"><div id="progress-bar" class="bg-purple-600 h-2.5 rounded-full" style="width: ${100 / quizData.questions.length}%"></div></div><p id="question-text" class="text-xl text-right font-semibold text-gray-700 mb-8 min-h-[6rem]"></p><div id="options-container" class="space-y-4"></div><div class="flex justify-between mt-8"><button id="skip-btn" class="btn bg-gray-500 hover:bg-gray-600">رد کردن سوال</button><button id="next-btn" class="btn btn-primary">ثبت و سوال بعدی</button></div></div>`;
-                    break;
-                case 'result':
-                     viewContent = `
-                        <div class="card">
-                            <div class="text-center"><h1 class="text-3xl font-bold text-gray-800 mb-4">کارنامه آزمون</h1><p class="text-xl text-gray-600 mb-2">${props.resultData.name}</p><p class="text-lg text-gray-500 mb-8">${allQuizzes[props.resultData.quizId].title}</p></div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div class="p-6 bg-purple-50 rounded-lg text-center"><p class="text-lg text-purple-800 font-semibold">درصد کل</p><p class="text-4xl font-bold text-purple-600">${props.resultData.percentage.toFixed(2)}%</p></div>
-                                <div class="p-6 bg-green-50 rounded-lg text-center"><p class="text-lg text-green-800 font-semibold">درصد احتمالی (بدون غلط)</p><p class="text-4xl font-bold text-green-600">${props.resultData.potentialPercentage.toFixed(2)}%</p></div>
-                                <div class="p-6 bg-indigo-50 rounded-lg text-center"><p class="text-lg text-indigo-800 font-semibold">رتبه شما</p><p class="text-4xl font-bold text-indigo-600">${props.rank}</p></div>
+                    viewContent = `<div class="card !p-6 md:!p-8 animate-slide-up">
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div><h2 class="text-xl font-bold text-gray-800">سوال <span id="question-number">1</span> / ${quizData.questions.length}</h2></div>
+                                <div class="text-left"><div class="text-lg font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-lg inline-block" id="timer"></div></div>
                             </div>
-                             <div class="my-8 p-4 bg-green-100 border-2 border-dashed border-green-400 rounded-lg text-center"><h3 class="text-xl font-bold text-green-800">یک قدم تا قبولی فاصله دارید!</h3><p class="text-green-700 my-2">با شرکت در دوره جامع روان پرستاری، شانس قبولی خود را تضمین کنید.</p><a href="https://psynurse.ir/shop/online-c/P1062-%D8%AF%D9%88%D8%B1%D9%87-%D8%AC%D8%A7%D9%85%D8%B9-%D8%B1%D9%88%D8%A7%D9%86-%D9%BE%D8%B1%D8%B3%D8%AA%D8%A7%D8%B1%DB%8C-%D8%A7%D8%B1%D8%B4%D8%AF-%DB%B1%DB%B4%DB%B0%DB%B5.html" target="_blank" id="ad-link-btn" class="btn bg-green-600 hover:bg-green-700 mt-2">مشاهده دوره و ثبت نام</a></div>
-                            <div id="ai-consultation-container" class="border-t pt-8 mt-8">
-                                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">تحلیل آزمون و مشاوره هوشمند</h2>
-                                <div id="ai-consultation-content" class="p-6 bg-purple-50 text-purple-800 rounded-lg">
-                                    <p class="text-center animate-pulse">درحال آماده سازی تحلیل آزمون و نتیجه شما...</p>
-                                </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4"><div id="progress-bar" class="bg-purple-600 h-2.5 rounded-full" style="width: ${100 / quizData.questions.length}%"></div></div>
+                            <p id="question-text" class="text-lg md:text-xl text-right font-semibold text-gray-700 mb-4 min-h-[4rem]"></p>
+                            <div id="options-container" class="space-y-3"></div>
+                            <div class="flex justify-between mt-6">
+                                <button id="previous-btn" class="btn bg-gray-500 hover:bg-gray-600">سوال قبلی</button>
+                                <button id="next-btn" class="btn btn-primary">سوال بعدی</button>
                             </div>
-                            <div class="border-t pt-8 mt-8"><h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">تحلیل عملکرد</h2><div class="max-w-xs mx-auto"><canvas id="resultPieChart"></canvas></div></div>
-                            <div class="border-t pt-8 mt-8"><h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">بررسی سوالات</h2><div id="question-review-container" class="space-y-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg"></div></div>
-                            <div class="text-center"><button id="back-to-dashboard-btn" class="mt-12 btn btn-primary">بازگشت به داشبورد</button></div>
                         </div>`;
+                    break;
+                 case 'result':
+                    let backButtonHtml = `<button id="back-to-dashboard-btn" class="mt-12 btn btn-primary">بازگشت به داشبورد</button>`;
+                    if (props.origin === 'admin') {
+                        backButtonHtml = `<button id="back-to-admin-panel-btn" class="mt-12 btn btn-primary">بازگشت به پنل استاد</button>`;
+                    }
+                     viewContent = `<div class="card animate-slide-up"><div class="text-center"><h1 class="text-3xl font-bold text-gray-800 mb-4">کارنامه آزمون</h1><p class="text-xl text-gray-600 mb-2">${props.resultData.name}</p><p class="text-lg text-gray-500 mb-8">${allQuizzes[props.resultData.quizId].title}</p></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"><div class="p-6 bg-purple-50 rounded-lg text-center"><p class="text-lg text-purple-800 font-semibold">درصد کل</p><p class="text-4xl font-bold text-purple-600">${props.resultData.percentage.toFixed(2)}%</p></div><div class="p-6 bg-green-50 rounded-lg text-center"><p class="text-lg text-green-800 font-semibold">درصد احتمالی (بدون غلط)</p><p class="text-4xl font-bold text-green-600">${props.resultData.potentialPercentage.toFixed(2)}%</p></div><div class="p-6 bg-indigo-50 rounded-lg text-center"><p class="text-lg text-indigo-800 font-semibold">رتبه شما</p><p class="text-4xl font-bold text-indigo-600">${props.rank}</p></div></div><div class="my-8 p-4 bg-green-100 border-2 border-dashed border-green-400 rounded-lg text-center"><h3 class="text-xl font-bold text-green-800">یک قدم تا قبولی فاصله دارید!</h3><p class="text-green-700 my-2">با شرکت در دوره جامع روان پرستاری، شانس قبولی خود را تضمین کنید.</p><a href="https://psynurse.ir/shop/online-c/P1062-%D8%AF%D9%88%D8%B1%D9%87-%D8%AC%D8%A7%D9%85%D8%B9-%D8%B1%D9%88%D8%A7%D9%86-%D9%BE%D8%B1%D8%B3%D8%AA%D8%A7%D8%B1%DB%8C-%D8%A7%D8%B1%D8%B4%D8%AF-%DB%B1%DB%B4%DB%B0%DB%B5.html" target="_blank" id="ad-link-btn" class="btn bg-green-600 hover:bg-green-700 mt-2">مشاهده دوره و ثبت نام</a></div><div id="ai-consultation-container" class="border-t pt-8 mt-8"><h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">تحلیل آزمون و مشاوره هوشمند</h2><div id="ai-consultation-content" class="p-6 bg-purple-50 text-purple-800 rounded-lg"><p class="text-center animate-pulse">درحال آماده سازی تحلیل آزمون و نتیجه شما...</p></div></div><div class="border-t pt-8 mt-8"><h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">تحلیل عملکرد</h2><div class="max-w-xs mx-auto"><canvas id="resultPieChart"></canvas></div></div><div class="border-t pt-8 mt-8"><h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">بررسی سوالات</h2><div id="question-review-container" class="space-y-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg"></div></div><div class="text-center">${backButtonHtml}</div></div>`;
                     break;
                 case 'paymentInstructions':
                     const quizToPay = allQuizzes[props.quizId];
-                    viewContent = `
-                        <div class="card max-w-lg mx-auto text-center">
-                             <h2 class="text-2xl font-bold text-gray-800 mb-4">راهنمای پرداخت</h2>
-                             <p class="mb-6">برای شرکت در آزمون "${quizToPay.title}"، لطفاً مبلغ زیر را به شماره کارت داده شده واریز نمایید.</p>
-                             <div class="p-6 bg-purple-50 border-2 border-dashed border-purple-300 rounded-lg mb-6">
-                                 <p class="text-lg">مبلغ قابل پرداخت:</p>
-                                 <p id="payment-amount" class="text-4xl font-bold text-purple-700 my-2">${quizToPay.price.toLocaleString('fa-IR')} تومان</p>
-                                 <p class="text-lg mt-4">به شماره کارت:</p>
-                                 <p class="text-2xl font-bold text-gray-700 tracking-widest my-2">${PAYMENT_INFO.cardNumber}</p>
-                                 <p class="text-md text-gray-600">به نام: ${PAYMENT_INFO.accountHolder}</p>
-                             </div>
-                             <div class="flex items-center gap-2 mb-6">
-                                <input type="text" id="discount-code-input" class="input-field" placeholder="کد تخفیف (اختیاری)">
-                                <button id="apply-discount-btn" class="btn btn-primary">اعمال</button>
-                             </div>
-                             <p id="discount-feedback" class="text-sm h-5 mb-6"></p>
-                             <p class="text-sm text-gray-500 mb-6">پس از واریز، روی دکمه زیر کلیک کرده و اطلاعات تراکنش خود را برای تایید ثبت کنید.</p>
-                             <div class="flex justify-between">
-                                <button id="back-to-dash-btn" class="btn bg-gray-500 hover:bg-gray-600">انصراف</button>
-                                <button id="proceed-to-submit-btn" class="btn btn-primary">اطلاعات واریز را ثبت می‌کنم</button>
-                             </div>
-                        </div>`;
+                    const currentPrice = quizSettings[props.quizId]?.price ?? quizToPay.price;
+                    viewContent = `<div class="card max-w-lg mx-auto text-center animate-slide-up"><h2 class="text-2xl font-bold text-gray-800 mb-4">راهنمای پرداخت</h2><p class="mb-6">برای شرکت در آزمون "${quizToPay.title}"، لطفاً مبلغ زیر را به شماره کارت داده شده واریز نمایید.</p><div class="p-6 bg-purple-50 border-2 border-dashed border-purple-300 rounded-lg mb-6"><p class="text-lg">مبلغ قابل پرداخت:</p><p id="payment-amount" class="text-4xl font-bold text-purple-700 my-2">${currentPrice.toLocaleString('fa-IR')} تومان</p><p class="text-lg mt-4">به شماره کارت:</p><p class="text-2xl font-bold text-gray-700 tracking-widest my-2">${PAYMENT_INFO.cardNumber}</p><p class="text-md text-gray-600">به نام: ${PAYMENT_INFO.accountHolder}</p></div><div class="my-6"><label for="discount-code-input" class="block mb-2 text-sm font-medium text-gray-900">کد تخفیف دارید؟</label><div class="flex items-center gap-2"><input type="text" id="discount-code-input" class="input-field text-center tracking-widest" placeholder="کد تخفیف"><button id="apply-discount-btn" class="btn btn-primary px-4">اعمال</button></div><p id="discount-feedback" class="text-sm mt-2 h-5"></p></div><p class="text-sm text-gray-500 mb-6">پس از واریز، روی دکمه زیر کلیک کرده و اطلاعات تراکنش خود را برای تایید ثبت کنید.</p><div class="flex flex-col sm:flex-row justify-between gap-3"><button id="back-to-dash-btn" class="btn bg-gray-500 hover:bg-gray-600">انصراف</button><button id="proceed-to-submit-btn" class="btn btn-primary">اطلاعات واریز را ثبت می‌کنم</button></div></div>`;
                     break;
                 case 'paymentSubmission':
                      const quizForSubmit = allQuizzes[props.quizId];
-                     viewContent = `
-                        <div class="card max-w-lg mx-auto">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">ثبت اطلاعات واریز</h2>
-                            <p class="mb-6 text-gray-600">برای آزمون: <span class="font-bold">${quizForSubmit.title}</span></p>
-                            <form id="payment-submission-form">
-                                <label class="block mb-2 font-semibold">کد رهگیری پرداخت یا چهار رقم اخر کارتی که پرداخت کرده اید</label>
-                                <input type="text" id="transaction-ref" class="input-field" placeholder="کد رهگیری یا ۴ رقم آخر کارت را وارد کنید" required>
-                                <p class="text-xs text-gray-500 mt-2">این کد برای تطبیق واریزی شما توسط استاد استفاده خواهد شد.</p>
-                                <div class="flex justify-between mt-8">
-                                    <button type="button" id="back-to-instructions-btn" class="btn bg-gray-500 hover:bg-gray-600">بازگشت</button>
-                                    <button type="submit" id="submit-payment-btn" class="btn btn-primary">ثبت و انتظار برای تایید</button>
-                                </div>
-                                <p id="payment-submit-error" class="text-red-500 mt-4 h-5 text-center"></p>
-                            </form>
-                        </div>`;
+                     viewContent = `<div class="card max-w-lg mx-auto animate-slide-up"><h2 class="text-2xl font-bold text-gray-800 mb-2">ثبت اطلاعات واریز</h2><p class="mb-6 text-gray-600">برای آزمون: <span class="font-bold">${quizForSubmit.title}</span></p><form id="payment-submission-form"><label class="block mb-2 font-semibold">کد مرجع یا رهگیری پرداخت را وارد کنید</label><input type="text" id="transaction-ref" class="input-field" placeholder="کد مرجع یا رهگیری پرداخت را وارد کنید" required><p class="text-xs text-gray-500 mt-2">این کد برای تطبیق واریزی شما توسط استاد استفاده خواهد شد.</p><div class="flex flex-col sm:flex-row justify-between mt-8 gap-3"><button type="button" id="back-to-instructions-btn" class="btn bg-gray-500 hover:bg-gray-600">بازگشت</button><button type="submit" id="submit-payment-btn" class="btn btn-primary">ثبت و انتظار برای تایید</button></div><p id="payment-submit-error" class="text-red-500 mt-4 h-5 text-center"></p></form></div>`;
                     break;
             }
             mainContainer.innerHTML = viewContent;
@@ -369,45 +402,85 @@
                 document.getElementById('register-tab-btn').addEventListener('click', () => { loginForm.classList.add('hidden'); registerForm.classList.remove('hidden'); document.getElementById('login-tab-btn').classList.remove('active'); document.getElementById('register-tab-btn').classList.add('active'); });
                 registerForm.addEventListener('submit', handleRegister);
                 loginForm.addEventListener('submit', handleLogin);
-                document.querySelectorAll('.toggle-password-visibility').forEach(icon => { /* ... Unchanged ... */ });
+                document.querySelectorAll('.toggle-password-visibility').forEach(icon => {
+                    icon.addEventListener('click', () => {
+                        const passwordInput = icon.previousElementSibling;
+                        const isPassword = passwordInput.type === 'password';
+                        passwordInput.type = isPassword ? 'text' : 'password';
+                        icon.innerHTML = isPassword ? 
+                            `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash text-gray-400" viewBox="0 0 16 16"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.94 5.94 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.113-.116.227-.176.338l.77.772c.036-.058.073-.115.11-.174zM11.115 12.883l.168.167a5.94 5.94 0 0 1-1.282.454A6.002 6.002 0 0 1 8 13.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8l.195-.238c.17-.207.35-.407.54-.602l.167.167A5.94 5.94 0 0 1 4.5 8c0 .244.028.482.08.714l.21.21a2.5 2.5 0 0 0 3.12 3.12l.21.21c.232.052.47.08.714.08a4.5 4.5 0 0 0 2.22-.505l.167.167zm-4.48-4.48a3.5 3.5 0 1 1-4.95-4.95a3.5 3.5 0 0 1 4.95 4.95zM1.359 4.238A13.134 13.134 0 0 1 .172 8l.195.238c.333.406.72.78 1.145 1.11l.167-.167a5.94 5.94 0 0 1-1.282-.454A6.002 6.002 0 0 1 2.5 8c0-.244.028-.482.08-.714l.21-.21a2.5 2.5 0 0 0-3.12-3.12l-.21-.21A4.5 4.5 0 0 0 1.505 5.5l-.167-.167zm12.28 9.28l-1.414-1.414a10.994 10.994 0 0 0-3.483-.98A5.94 5.94 0 0 1 8 10.5a2.5 2.5 0 1 1 3.536-3.536l1.414-1.414a1 1 0 0 0-1.414-1.414l-11.314 11.314a1 1 0 1 0 1.414 1.414l1.414-1.414A10.994 10.994 0 0 0 8 13.5a5.94 5.94 0 0 1-3.045-1.01l-1.414-1.414a1 1 0 0 0-1.414 1.414l11.314-11.314a1 1 0 0 0 1.414 1.414z"/></svg>` : 
+                            `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye text-gray-400" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.816 1.123-2.455 2.226-4.223 2.659A5.006 5.006 0 0 1 8 10.5a5 5 0 0 1-2.605-.724A13.132 13.132 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>`;
+                    });
+                });
             } else if (viewName === 'studentDashboard') {
                 const adminBtn = document.getElementById('show-admin-panel-btn');
-                if (adminBtn) adminBtn.addEventListener('click', () => renderView('adminDashboard'));
+                if (adminBtn) adminBtn.addEventListener('click', () => {
+                    if (unsubscribeUserPaymentsListener) unsubscribeUserPaymentsListener();
+                    renderView('adminDashboard');
+                });
                 document.getElementById('logout-student-btn').addEventListener('click', () => signOut(auth));
+                document.getElementById('quiz-search-input').addEventListener('input', handleQuizSearch);
                 loadStudentQuizzes();
             } else if (viewName === 'adminDashboard') {
-                document.getElementById('logout-admin-btn').addEventListener('click', () => { if (unsubscribeAdminListener) unsubscribeAdminListener(); renderView('studentDashboard'); });
+                const backToDashboard = () => {
+                    if (unsubscribeAdminListener) unsubscribeAdminListener();
+                    listenForUserPayments();
+                    renderView('studentDashboard'); 
+                };
+                document.getElementById('logout-admin-btn').addEventListener('click', backToDashboard);
+                document.getElementById('logout-admin-btn-mobile').addEventListener('click', backToDashboard);
+                
                 document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.addEventListener('click', () => handleAdminTabChange(btn.dataset.tab)));
                 handleAdminTabChange('results');
             } else if (viewName === 'quiz') {
-                document.getElementById('next-btn').addEventListener('click', () => handleNextQuestion(true));
-                document.getElementById('skip-btn').addEventListener('click', () => handleNextQuestion(false));
+                document.getElementById('next-btn').addEventListener('click', handleNextQuestion);
+                document.getElementById('previous-btn').addEventListener('click', handlePreviousQuestion);
             } else if (viewName === 'result') {
-                document.getElementById('back-to-dashboard-btn').addEventListener('click', () => renderView('studentDashboard'));
+                const studentBackBtn = document.getElementById('back-to-dashboard-btn');
+                if (studentBackBtn) studentBackBtn.addEventListener('click', () => renderView('studentDashboard'));
+                
+                const adminBackBtn = document.getElementById('back-to-admin-panel-btn');
+                if (adminBackBtn) adminBackBtn.addEventListener('click', () => renderView('adminDashboard'));
+
+                const adLinkBtn = document.getElementById('ad-link-btn');
+                if (adLinkBtn) {
+                    adLinkBtn.addEventListener('click', () => {
+                        const resultDocRef = doc(db, 'quiz_results', props.resultData.id);
+                        updateDoc(resultDocRef, { adClicked: true });
+                    });
+                }
+                
                 renderResultPieChart(props.resultData);
                 renderQuestionReview(props.resultData);
+                
                 const contentEl = document.getElementById('ai-consultation-content');
                 if (props.resultData.aiAnalysis) {
+                    // If analysis is already saved, just display it.
                     contentEl.innerHTML = props.resultData.aiAnalysis;
                 } else {
+                    // If no analysis is saved, attempt to generate it.
                     getAIAnalysis(props.resultData).then(analysis => {
-                        if (contentEl) contentEl.innerHTML = analysis;
-                        const resultDocRef = doc(db, `artifacts/${appId}/public/data/quiz_results`, props.resultData.id);
-                        updateDoc(resultDocRef, { aiAnalysis: analysis });
-                        if(document.getElementById('retry-ai-btn')) {
-                            document.getElementById('retry-ai-btn').addEventListener('click', () => {
-                                contentEl.innerHTML = `<p class="text-center animate-pulse">درحال آماده سازی تحلیل آزمون و نتیجه شما...</p>`;
-                                getAIAnalysis(props.resultData).then(newAnalysis => {
-                                    if (contentEl) contentEl.innerHTML = newAnalysis;
-                                    updateDoc(resultDocRef, { aiAnalysis: newAnalysis });
-                                });
-                            });
+                        if (contentEl) {
+                            if (analysis) {
+                                // SUCCESS: Analysis was generated.
+                                // 1. Display it.
+                                contentEl.innerHTML = analysis;
+                                // 2. Save it to Firestore for future visits.
+                                const resultDocRef = doc(db, 'quiz_results', props.resultData.id);
+                                updateDoc(resultDocRef, { aiAnalysis: analysis });
+                            } else {
+                                // FAILURE: Analysis could not be generated.
+                                // Display a temporary error message, but DO NOT save it to Firestore.
+                                contentEl.innerHTML = '<p class="text-center text-red-600 font-semibold">خطا در ایجاد تحلیل هوشمند. لطفاً اتصال اینترنت خود را بررسی کرده و صفحه را دوباره بارگذاری کنید.</p>';
+                            }
                         }
                     });
                 }
+
             } else if (viewName === 'paymentInstructions') {
                 document.getElementById('back-to-dash-btn').addEventListener('click', () => renderView('studentDashboard'));
                 document.getElementById('proceed-to-submit-btn').addEventListener('click', () => renderView('paymentSubmission', { quizId: props.quizId }));
+                document.getElementById('apply-discount-btn').addEventListener('click', () => handleApplyDiscount(props.quizId));
             }
             else if (viewName === 'paymentSubmission') {
                 document.getElementById('back-to-instructions-btn').addEventListener('click', () => renderView('paymentInstructions', { quizId: props.quizId }));
@@ -419,18 +492,20 @@
         onAuthStateChanged(auth, async (user) => {
             renderView('loading');
             if (user) {
-                const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, user.uid);
-                const userDoc = await getDoc(userDocRef);
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     currentUser = user;
-                    userProfile = userDoc.data();
-                    if(unsubscribeUserPaymentsListener) unsubscribeUserPaymentsListener();
+                    userProfile = sanitizeObjectKeys(userDoc.data());
+                    Object.values({unsubscribeUserPaymentsListener, unsubscribeQuizSettingsListener, unsubscribeDiscountsListener, unsubscribeQuizzesListener}).forEach(unsub => unsub && unsub());
+                    listenForQuizzes(); 
+                    listenForQuizSettings();
+                    listenForDiscounts();
                     listenForUserPayments();
+                    renderView('studentDashboard');
                 } else { await signOut(auth); }
             } else {
                 currentUser = null; userProfile = null;
-                if (unsubscribeAdminListener) unsubscribeAdminListener();
-                if (unsubscribeUserPaymentsListener) unsubscribeUserPaymentsListener();
+                Object.values({unsubscribeAdminListener, unsubscribeUserPaymentsListener, unsubscribeQuizSettingsListener, unsubscribeDiscountsListener, unsubscribeQuizzesListener}).forEach(unsub => unsub && unsub());
                 renderView('auth');
             }
         });
@@ -438,31 +513,21 @@
         // --- HANDLER FUNCTIONS ---
         const handleRegister = async (e) => {
             e.preventDefault();
-            const name = document.getElementById('register-name').value.trim();
-            const phone = document.getElementById('register-phone').value.trim();
-            const email = document.getElementById('register-email').value.trim();
-            const password = document.getElementById('register-password').value;
-            const confirmPassword = document.getElementById('register-password-confirm').value;
-            const errorEl = document.getElementById('register-error');
-            const submitBtn = document.getElementById('register-submit-btn');
+            const name = document.getElementById('register-name').value.trim(), phone = document.getElementById('register-phone').value.trim(), email = document.getElementById('register-email').value.trim(), password = document.getElementById('register-password').value, confirmPassword = document.getElementById('register-password-confirm').value;
+            const errorEl = document.getElementById('register-error'), submitBtn = document.getElementById('register-submit-btn');
+            errorEl.textContent = '';
             if (!name || !phone || !email || !password || !confirmPassword) { errorEl.textContent = 'لطفاً تمام فیلدها را پر کنید.'; return; }
             if (password !== confirmPassword) { errorEl.textContent = 'رمزهای عبور با یکدیگر مطابقت ندارند.'; return; }
-            if (name.length < 3) { errorEl.textContent = 'نام باید حداقل ۳ حرف داشته باشد.'; return; }
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) { errorEl.textContent = 'فرمت ایمیل وارد شده صحیح نیست.'; return; }
-            const phoneRegex = /^09\d{9}$/;
-            if (!phoneRegex.test(phone)) { errorEl.textContent = 'شماره تماس باید ۱۱ رقم باشد و با 09 شروع شود.'; return; }
+            if (!/^09\d{9}$/.test(phone)) { errorEl.textContent = 'شماره تماس باید ۱۱ رقم باشد و با 09 شروع شود.'; return; }
             toggleButtonLoading(submitBtn, true, 'ثبت نام');
-            errorEl.textContent = '';
             try {
+                if (!(await getDocs(query(collection(db, 'users'), where("phone", "==", phone)))).empty) throw { code: 'auth/phone-number-already-in-use' };
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, user.uid);
-                await setDoc(userDocRef, { name, phone, email });
+                await setDoc(doc(db, 'users', userCredential.user.uid), { name, phone, email });
             } catch (error) {
-                 if (error.code === 'auth/email-already-in-use') errorEl.textContent = 'این ایمیل قبلاً ثبت نام کرده است.';
-                 else if (error.code === 'auth/weak-password') errorEl.textContent = 'رمز عبور باید حداقل ۶ کاراکتر باشد.';
-                 else { errorEl.textContent = 'خطا در ثبت نام. دوباره تلاش کنید.'; console.error("Registration Error: ", error); }
+                const errorMap = {'auth/email-already-in-use': 'این ایمیل قبلاً ثبت نام کرده است.', 'auth/phone-number-already-in-use': 'این شماره تماس قبلاً ثبت نام کرده است.', 'auth/weak-password': 'رمز عبور باید حداقل ۶ کاراکتر باشد.'};
+                errorEl.textContent = errorMap[error.code] || 'خطا در ثبت نام. دوباره تلاش کنید.';
+                console.error("Registration Error: ", error); 
             } finally {
                 toggleButtonLoading(submitBtn, false, 'ثبت نام');
             }
@@ -470,75 +535,27 @@
 
         const handleLogin = async (e) => {
              e.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-            const submitBtn = document.getElementById('login-submit-btn');
+            const email = document.getElementById('login-email').value.trim(), password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error'), submitBtn = document.getElementById('login-submit-btn');
             toggleButtonLoading(submitBtn, true, 'ورود');
             errorEl.textContent = '';
             try { await signInWithEmailAndPassword(auth, email, password); } 
             catch (error) {
-                if (error.code === 'auth/invalid-credential') errorEl.textContent = 'ایمیل یا رمز عبور اشتباه است.';
-                else { errorEl.textContent = 'خطا در ورود. دوباره تلاش کنید.'; console.error("Login Error: ", error); }
+                errorEl.textContent = error.code === 'auth/invalid-credential' ? 'ایمیل یا رمز عبور اشتباه است.' : 'خطا در ورود. دوباره تلاش کنید.';
+                console.error("Login Error: ", error);
             } finally {
                 toggleButtonLoading(submitBtn, false, 'ورود');
             }
         };
         
-        const handleForgotPassword = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('reset-email').value.trim();
-            const feedbackEl = document.getElementById('reset-feedback');
-            const submitBtn = document.getElementById('reset-submit-btn');
-            if (!email) {
-                feedbackEl.textContent = 'لطفاً ایمیل خود را وارد کنید.';
-                feedbackEl.classList.remove('text-green-600');
-                feedbackEl.classList.add('text-red-500');
-                return;
-            }
-            toggleButtonLoading(submitBtn, true, 'در حال ارسال');
-            feedbackEl.textContent = '';
-            try {
-                await sendPasswordResetEmail(auth, email);
-                feedbackEl.classList.remove('text-red-500');
-                feedbackEl.classList.add('text-green-600');
-                feedbackEl.textContent = 'ایمیل بازیابی با موفقیت ارسال شد.';
-            } catch (error) {
-                feedbackEl.classList.remove('text-green-600');
-                feedbackEl.classList.add('text-red-500');
-                if (error.code === 'auth/user-not-found') {
-                    feedbackEl.textContent = 'کاربری با این ایمیل یافت نشد.';
-                } else {
-                    feedbackEl.textContent = 'خطا در ارسال ایمیل. لطفاً دوباره تلاش کنید.';
-                }
-                console.error("Forgot password error:", error);
-            } finally {
-                toggleButtonLoading(submitBtn, false, 'ارسال لینک بازیابی');
-            }
-        };
-
         async function handlePaymentSubmission(e, quizId) {
             e.preventDefault();
             const ref = document.getElementById('transaction-ref').value.trim();
-            if (!ref) {
-                document.getElementById('payment-submit-error').textContent = 'لطفاً کد رهگیری را وارد کنید.';
-                return;
-            }
+            if (!ref) { document.getElementById('payment-submit-error').textContent = 'لطفاً کد رهگیری را وارد کنید.'; return; }
             const submitBtn = document.getElementById('submit-payment-btn');
             toggleButtonLoading(submitBtn, true, 'در حال ثبت');
-            
             try {
-                const paymentsCollection = collection(db, `artifacts/${appId}/public/data/payments`);
-                await addDoc(paymentsCollection, {
-                    userId: currentUser.uid,
-                    userName: userProfile.name,
-                    userEmail: currentUser.email,
-                    quizId: quizId,
-                    quizTitle: allQuizzes[quizId].title,
-                    transactionRef: ref,
-                    status: 'pending',
-                    timestamp: Timestamp.now()
-                });
+                await addDoc(collection(db, 'payments'), { userId: currentUser.uid, userName: userProfile.name, userEmail: currentUser.email, quizId, quizTitle: allQuizzes[quizId].title, transactionRef: ref, status: 'pending', timestamp: Timestamp.now() });
                 alert('اطلاعات واریز شما با موفقیت ثبت شد. پس از تایید توسط استاد، آزمون برای شما فعال خواهد شد.');
                 renderView('studentDashboard');
             } catch (error) {
@@ -548,70 +565,120 @@
                 toggleButtonLoading(submitBtn, false, 'ثبت و انتظار برای تایید');
             }
         }
-        
-        // --- STUDENT DASHBOARD LOGIC ---
-        function listenForUserPayments() {
-            if(unsubscribeUserPaymentsListener) unsubscribeUserPaymentsListener();
-            const paymentsCollection = collection(db, `artifacts/${appId}/public/data/payments`);
-            const q = query(paymentsCollection, where("userId", "==", currentUser.uid));
-            unsubscribeUserPaymentsListener = onSnapshot(q, (snapshot) => {
-                userPayments = snapshot.docs.map(doc => doc.data());
-                if (mainContainer.querySelector('#available-quizzes-container')) {
-                    loadStudentQuizzes();
-                }
+
+        function handleQuizSearch(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const quizzesToFilter = Object.entries(allQuizzes);
+            
+            const filteredQuizzes = quizzesToFilter.filter(([quizId, quizData]) => {
+                const titleMatch = quizData.title.toLowerCase().includes(searchTerm);
+                const topicMatch = quizData.topics && quizData.topics.some(topic => topic.toLowerCase().includes(searchTerm));
+                return titleMatch || topicMatch;
             });
-            renderView('studentDashboard');
+
+            loadStudentQuizzes(Object.fromEntries(filteredQuizzes), true);
+        }
+        
+        // --- DATA LISTENERS ---
+        function listenForQuizzes() {
+            if(unsubscribeQuizzesListener) unsubscribeQuizzesListener();
+            unsubscribeQuizzesListener = onSnapshot(collection(db, 'quizzes'), (snapshot) => {
+                allQuizzes = {};
+                snapshot.docs.forEach(doc => allQuizzes[doc.id] = sanitizeObjectKeys(doc.data()));
+                const isStudentView = mainContainer.querySelector('#available-quizzes-container'), isAdminView = mainContainer.querySelector('#admin-content');
+                if (isStudentView) loadStudentQuizzes();
+                else if (isAdminView) handleAdminTabChange(document.querySelector('.admin-tab-btn.active')?.dataset.tab);
+            }, (error) => console.error("خطا در خواندن آزمون‌ها:", error));
         }
 
-        async function loadStudentQuizzes() {
-            const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
-            const q = query(resultsCollection, where("userId", "==", currentUser.uid));
-            const snapshot = await getDocs(q);
-            const completedResults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const completedQuizIds = new Set(completedResults.map(r => r.quizId));
-            const availableContainer = document.getElementById('available-quizzes-container'), completedContainer = document.getElementById('completed-quizzes-container');
-            if(!availableContainer || !completedContainer) return;
-            availableContainer.innerHTML = ''; completedContainer.innerHTML = '';
-            
-            Object.entries(allQuizzes).forEach(([quizId, quizData]) => {
-                if (!completedQuizIds.has(quizId)) {
-                    let buttonHtml = '';
-                    if (quizData.price === 0) {
-                        buttonHtml = `<button data-quiz-id="${quizId}" class="btn btn-primary start-quiz-btn">شروع (رایگان)</button>`;
-                    } else {
-                        const payment = userPayments.find(p => p.quizId === quizId);
-                        if (payment && payment.status === 'approved') {
-                            buttonHtml = `<button data-quiz-id="${quizId}" class="btn btn-primary start-quiz-btn">شروع آزمون</button>`;
-                        } else if (payment && payment.status === 'pending') {
-                             buttonHtml = `<button class="btn btn-primary" disabled>در انتظار تایید</button>`;
-                        } else {
-                            buttonHtml = `<button data-quiz-id="${quizId}" class="btn bg-green-600 hover:bg-green-700 pay-quiz-btn">${quizData.price.toLocaleString('fa-IR')} تومان - پرداخت</button>`;
+        function listenForQuizSettings() {
+            if(unsubscribeQuizSettingsListener) unsubscribeQuizSettingsListener();
+            unsubscribeQuizSettingsListener = onSnapshot(collection(db, 'quiz_settings'), (snapshot) => {
+                quizSettings = {};
+                snapshot.docs.forEach(doc => quizSettings[doc.id] = sanitizeObjectKeys(doc.data()));
+                if (mainContainer.querySelector('#available-quizzes-container')) loadStudentQuizzes();
+                if (mainContainer.querySelector('#quiz-management-container')) renderAdminQuizManagement();
+                if (mainContainer.querySelector('#admin-prices-container')) renderAdminPriceManagement();
+            }, (error) => console.error("Error fetching quiz settings:", error));
+        }
+
+        function listenForDiscounts() {
+            if(unsubscribeDiscountsListener) unsubscribeDiscountsListener();
+            unsubscribeDiscountsListener = onSnapshot(collection(db, 'discount_codes'), (snapshot) => {
+                discounts = snapshot.docs.map(doc => ({ id: doc.id, ...sanitizeObjectKeys(doc.data()) }));
+                if (mainContainer.querySelector('#admin-discounts-container')) renderAdminDiscounts();
+            }, (error) => console.error("Error fetching discounts:", error));
+        }
+
+        function listenForUserPayments() {
+            if(unsubscribeUserPaymentsListener) unsubscribeUserPaymentsListener();
+            unsubscribeUserPaymentsListener = onSnapshot(query(collection(db, 'payments'), where("userId", "==", currentUser.uid)), (snapshot) => {
+                userPayments = snapshot.docs.map(doc => sanitizeObjectKeys(doc.data()));
+                if (mainContainer.querySelector('#available-quizzes-container')) loadStudentQuizzes();
+            }, (error) => console.error("Error fetching user payments:", error));
+        }
+
+        // --- STUDENT DASHBOARD LOGIC ---
+        async function loadStudentQuizzes(quizzesToDisplay = allQuizzes, isSearch = false) {
+            const completedContainer = document.getElementById('completed-quizzes-container');
+            if (!isSearch) {
+                 const resultsCollection = collection(db, 'quiz_results');
+                const q = query(resultsCollection, where("userId", "==", currentUser.uid));
+                const snapshot = await getDocs(q);
+                const completedResults = snapshot.docs.map(doc => ({ id: doc.id, ...sanitizeObjectKeys(doc.data()) }));
+
+                if (completedContainer) {
+                    completedContainer.innerHTML = '';
+                    if (completedResults.length > 0) {
+                         completedResults.sort((a,b) => a.timestamp.toMillis() - b.timestamp.toMillis()).forEach((res, index) => {
+                            completedContainer.innerHTML += `<div class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-right p-4 bg-white border rounded-lg gap-3 animate-stagger-item" style="animation-delay: ${index * 100}ms"><div class="flex-grow"><p class="font-bold">${allQuizzes[res.quizId]?.title || res.quizId}</p><p class="text-sm text-gray-500 mt-1">تاریخ: ${new Date(res.timestamp.seconds * 1000).toLocaleDateString('fa-IR')} - درصد: ${res.percentage.toFixed(2)}%</p></div><div class="flex-shrink-0 mt-3 sm:mt-0"><button data-result-id="${res.id}" class="btn btn-primary text-sm py-1 px-3 view-report-btn">مشاهده کارنامه</button></div></div>`;
+                        });
+                        document.querySelectorAll('.view-report-btn').forEach(btn => btn.addEventListener('click', (e) => displayResults(completedResults.find(r => r.id === e.target.dataset.resultId), 'student')));
+                        if (completedResults.length > 1) {
+                            document.getElementById('progress-chart-container').classList.remove('hidden');
+                            renderProgressChart(completedResults.map(r => allQuizzes[r.quizId]?.title || r.quizId), completedResults.map(r => r.percentage));
                         }
-                    }
-                    availableContainer.innerHTML += `<div class="flex justify-between items-center p-3 bg-white border rounded-lg"><p class="font-bold">${quizData.title}</p>${buttonHtml}</div>`;
+                    } else { completedContainer.innerHTML = '<p class="text-gray-500 animate-slide-up">هنوز در هیچ آزمونی شرکت نکرده‌اید.</p>'; }
                 }
+            }
+            
+            const availableContainer = document.getElementById('available-quizzes-container');
+            const completedSnapshot = await getDocs(query(collection(db, 'quiz_results'), where("userId", "==", currentUser.uid)));
+            const completedQuizIds = new Set(completedSnapshot.docs.map(r => r.data().quizId));
+
+            if(!availableContainer) return;
+            availableContainer.innerHTML = '';
+            
+            let availableQuizIndex = 0;
+            Object.entries(quizzesToDisplay).forEach(([quizId, quizData]) => {
+                try {
+                     if (!quizData || !quizData.title) return;
+                    if (!completedQuizIds.has(quizId)) {
+                        const isQuizActive = quizSettings[quizId]?.isActive !== false;
+                        const currentPrice = quizSettings[quizId]?.price ?? quizData.price;
+                        const payment = userPayments.find(p => p.quizId === quizId);
+                        let buttonHtml = '';
+                        if (!isQuizActive) buttonHtml = `<button class="btn bg-gray-400 cursor-not-allowed" disabled>غیرفعال</button>`;
+                        else if (currentPrice === 0) buttonHtml = `<button data-quiz-id="${quizId}" class="btn btn-primary start-quiz-btn">شروع (رایگان)</button>`;
+                        else if (payment?.status === 'approved') buttonHtml = `<button data-quiz-id="${quizId}" class="btn btn-primary start-quiz-btn">شروع آزمون</button>`;
+                        else if (payment?.status === 'pending') buttonHtml = `<button class="btn btn-primary" disabled>در انتظار تایید</button>`;
+                        else buttonHtml = `<button data-quiz-id="${quizId}" class="btn bg-green-600 hover:bg-green-700 pay-quiz-btn">${currentPrice.toLocaleString('fa-IR')} تومان - پرداخت</button>`;
+                        
+                        availableContainer.innerHTML += `<div class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-right p-4 border rounded-lg gap-3 transition-all ${!isQuizActive ? 'bg-gray-50 opacity-60' : 'bg-white'} animate-stagger-item" style="animation-delay: ${availableQuizIndex * 100}ms"><div class="flex-grow"><p class="font-bold">${quizData.title}</p>${quizData.topics ? `<div class="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">${quizData.topics.map(topic => `<span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${topic}</span>`).join('')}</div>` : ''}</div><div class="flex-shrink-0 mt-3 sm:mt-0">${buttonHtml}</div></div>`;
+                        availableQuizIndex++;
+                    }
+                } catch (error) { console.error(`خطای پردازش آزمون ${quizId}:`, error); }
             });
             document.querySelectorAll('.start-quiz-btn').forEach(btn => btn.addEventListener('click', (e) => startQuiz(e.target.dataset.quizId)));
             document.querySelectorAll('.pay-quiz-btn').forEach(btn => btn.addEventListener('click', (e) => renderView('paymentInstructions', { quizId: e.target.dataset.quizId })));
             
-            if (availableContainer.innerHTML === '') availableContainer.innerHTML = '<p class="text-gray-500">آزمون جدیدی برای شرکت وجود ندارد.</p>';
-            
-            if (completedResults.length > 0) {
-                 completedResults.sort((a,b) => a.timestamp.toMillis() - b.timestamp.toMillis()); 
-                 completedResults.forEach(res => {
-                    completedContainer.innerHTML += `<div class="flex justify-between items-center p-3 bg-white border rounded-lg"><div><p class="font-bold">${allQuizzes[res.quizId]?.title || res.quizId}</p><p class="text-sm text-gray-500">تاریخ: ${new Date(res.timestamp.seconds * 1000).toLocaleDateString('fa-IR')} - درصد: ${res.percentage.toFixed(2)}%</p></div><button data-result-id="${res.id}" class="btn btn-primary text-sm py-1 px-3 view-report-btn">مشاهده کارنامه</button></div>`;
-                });
-                document.querySelectorAll('.view-report-btn').forEach(btn => btn.addEventListener('click', (e) => displayResults(completedResults.find(r => r.id === e.target.dataset.resultId))));
-                
-                if (completedResults.length > 1) {
-                    const chartContainer = document.getElementById('progress-chart-container');
-                    chartContainer.classList.remove('hidden');
-                    const labels = completedResults.map(r => allQuizzes[r.quizId]?.title || r.quizId);
-                    const data = completedResults.map(r => r.percentage);
-                    renderProgressChart(labels, data);
-                }
-            } else {
-                completedContainer.innerHTML = '<p class="text-gray-500">هنوز در هیچ آزمونی شرکت نکرده‌اید.</p>';
+            if (availableContainer.innerHTML === '') {
+                 const searchInput = document.getElementById('quiz-search-input');
+                 if (searchInput && searchInput.value) {
+                    availableContainer.innerHTML = '<p class="text-gray-500 animate-slide-up">هیچ آزمونی با این مشخصات یافت نشد.</p>';
+                 } else {
+                    availableContainer.innerHTML = '<p class="text-gray-500 animate-slide-up">آزمون جدیدی برای شرکت وجود ندارد.</p>';
+                 }
             }
         }
         
@@ -620,131 +687,220 @@
             const ctx = document.getElementById('progressChart')?.getContext('2d');
             if (!ctx) return;
             if (progressChartInstance) progressChartInstance.destroy();
-            progressChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'درصد کسب شده', data, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.2 }] },
-                options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
-            });
+            progressChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'درصد کسب شده', data, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.2 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } } });
         }
         
         function renderResultPieChart(resultData) {
             const ctx = document.getElementById('resultPieChart')?.getContext('2d');
             if (!ctx) return;
             if (resultPieChartInstance) resultPieChartInstance.destroy();
-            resultPieChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: [`صحیح (${resultData.correct})`, `غلط (${resultData.incorrect})`, `بی‌پاسخ (${resultData.unanswered})`],
-                    datasets: [{ data: [resultData.correct, resultData.incorrect, resultData.unanswered], backgroundColor: ['#10b981', '#ef4444', '#9ca3af'], hoverOffset: 4 }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'top' } } }
-            });
+            resultPieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: [`صحیح (${resultData.correct})`, `غلط (${resultData.incorrect})`, `بی‌پاسخ (${resultData.unanswered})`], datasets: [{ data: [resultData.correct, resultData.incorrect, resultData.unanswered], backgroundColor: ['#10b981', '#ef4444', '#9ca3af'], hoverOffset: 4 }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
         }
         
         // --- ADMIN DASHBOARD LOGIC ---
         function handleAdminTabChange(tabName) {
-            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('bg-purple-100'));
-            document.querySelector(`.admin-tab-btn[data-tab="${tabName}"]`).classList.add('bg-purple-100');
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`.admin-tab-btn[data-tab="${tabName}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
             const contentEl = document.getElementById('admin-content');
+            contentEl.innerHTML = `<div class="flex justify-center items-center h-full"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
             if (unsubscribeAdminListener) unsubscribeAdminListener();
             
-            if (tabName === 'results') {
-                contentEl.innerHTML = `
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6"><h1 class="text-2xl font-bold text-gray-800">تحلیل نتایج</h1><select id="quiz-filter" class="input-field w-auto"></select></div>
-                    <div id="admin-stats-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
-                    <div class="overflow-x-auto mb-8"><table class="w-full text-sm text-right text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-100"><tr><th class="px-6 py-3">رتبه</th><th class="px-6 py-3">نام</th><th class="px-6 py-3">درصد</th><th class="px-6 py-3">درصد احتمالی</th><th class="px-6 py-3">کلیک</th></tr></thead><tbody id="results-table-body"></tbody></table></div>
-                    <div><h2 class="text-2xl font-bold text-gray-800 mb-4">تحلیل سوالات</h2><div id="question-analysis-container" class="space-y-6"></div></div>`;
-                listenForAdminResults();
-            } else if (tabName === 'payments') {
-                contentEl.innerHTML = `
-                    <div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold text-gray-800">پرداخت‌های در انتظار تایید</h1></div>
-                    <div id="pending-payments-container" class="space-y-3"></div>`;
-                listenForAdminPayments();
+            const tabRenderMap = {
+                results: { html: `<div class="flex flex-wrap justify-between items-center gap-4 mb-6"><h1 class="text-2xl font-bold text-gray-800">تحلیل نتایج</h1><select id="quiz-filter" class="input-field w-auto"></select></div><div id="admin-stats-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div><div class="bg-white rounded-xl shadow-md overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm text-right text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-100"><tr><th class="px-6 py-4">رتبه</th><th class="px-6 py-4">نام</th><th class="px-6 py-4">درصد</th><th class="px-6 py-4">درصد احتمالی</th><th class="px-6 py-4">کلیک</th><th class="px-6 py-4">کارنامه</th></tr></thead><tbody id="results-table-body" class="divide-y divide-gray-200"></tbody></table></div></div><div class="mt-8"><h2 class="text-2xl font-bold text-gray-800 mb-4">تحلیل سوالات</h2><div id="question-analysis-container" class="space-y-6 bg-white rounded-xl shadow-md p-6"></div></div>`, listener: listenForAdminResults },
+                payments: { html: `<div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold text-gray-800">مدیریت پرداخت‌ها</h1></div><div class="border-b border-gray-200 mb-6"><nav class="-mb-px flex space-x-4 rtl:space-x-reverse" aria-label="Tabs"><button data-subtab="pending" class="payment-subtab-btn whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm">در انتظار تایید</button><button data-subtab="approved" class="payment-subtab-btn whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm">تایید شده ها</button></nav></div><div id="pending-payments-container" class="space-y-3"></div><div id="approved-payments-container" class="space-y-3 hidden"></div>`, listener: listenForAdminPayments },
+                quiz_management: { html: `<div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold text-gray-800">فعال/غیرفعال کردن آزمون‌ها</h1></div><div id="quiz-management-container" class="space-y-3"></div>`, renderer: renderAdminQuizManagement },
+                discounts: { html: `<div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold text-gray-800">مدیریت کدهای تخفیف</h1></div><div id="admin-discounts-container"></div>`, renderer: renderAdminDiscounts },
+                prices: { html: `<div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold text-gray-800">مدیریت قیمت آزمون‌ها</h1></div><div id="admin-prices-container" class="space-y-3"></div>`, renderer: renderAdminPriceManagement }
+            };
+            
+            const tab = tabRenderMap[tabName];
+            if (tab) {
+                contentEl.innerHTML = tab.html;
+                if (tab.listener) tab.listener();
+                else if (tab.renderer) tab.renderer();
             }
         }
         
+        function renderAdminQuizManagement() {
+            const container = document.getElementById('quiz-management-container');
+            if (!container) return;
+            container.innerHTML = Object.entries(allQuizzes).map(([quizId, quizData], index) => `<div class="flex justify-between items-center p-4 bg-white border rounded-lg animate-stagger-item" style="animation-delay: ${index * 50}ms"><p class="font-bold">${quizData.title}</p><div class="flex items-center"><span class="w-16 text-center text-sm font-bold transition-colors ${quizSettings[quizId]?.isActive !== false ? 'text-green-600' : 'text-red-600'} status-label">${quizSettings[quizId]?.isActive !== false ? 'فعال' : 'غیرفعال'}</span><label class="relative inline-flex items-center cursor-pointer ml-3"><input type="checkbox" class="sr-only peer quiz-status-toggle" data-quiz-id="${quizId}" ${quizSettings[quizId]?.isActive !== false ? 'checked' : ''}><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-purple-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div></label></div></div>`).join('');
+            document.querySelectorAll('.quiz-status-toggle').forEach(toggle => toggle.addEventListener('change', handleQuizStatusChange));
+        }
+        
+        async function handleQuizStatusChange(e) {
+            const quizId = e.target.dataset.quizId, newStatus = e.target.checked;
+            const label = e.target.closest('.flex.items-center').querySelector('.status-label');
+            if (label) { label.textContent = newStatus ? 'فعال' : 'غیرفعال'; label.classList.toggle('text-green-600', newStatus); label.classList.toggle('text-red-600', !newStatus); }
+            try { await setDoc(doc(db, 'quiz_settings', quizId), { isActive: newStatus }, { merge: true }); } 
+            catch (error) { console.error("Error updating quiz status:", error); alert('خطا در به‌روزرسانی وضعیت آزمون.'); e.target.checked = !newStatus; if (label) { label.textContent = !newStatus ? 'فعال' : 'غیرفعال'; label.classList.toggle('text-green-600', !newStatus); label.classList.toggle('text-red-600', newStatus); } }
+        }
+
+        function renderAdminPriceManagement() {
+            const container = document.getElementById('admin-prices-container');
+            if (!container) return;
+            container.innerHTML = Object.entries(allQuizzes).map(([quizId, quizData], index) => `<div class="flex flex-col sm:flex-row justify-between items-center p-4 bg-white border rounded-lg gap-3 animate-stagger-item" style="animation-delay: ${index * 50}ms"><p class="font-bold flex-grow">${quizData.title}</p><div class="flex items-center gap-2"><input type="number" value="${quizSettings[quizId]?.price ?? quizData.price}" data-quiz-id="${quizId}" class="input-field !w-32 text-center price-input" placeholder="قیمت (تومان)"><button data-quiz-id="${quizId}" class="btn btn-primary px-4 save-price-btn">ذخیره</button></div></div>`).join('');
+            document.querySelectorAll('.save-price-btn').forEach(btn => btn.addEventListener('click', handlePriceUpdate));
+        }
+
+        async function handlePriceUpdate(e) {
+            const quizId = e.target.dataset.quizId;
+            const newPrice = parseInt(document.querySelector(`.price-input[data-quiz-id="${quizId}"]`).value);
+            if (isNaN(newPrice) || newPrice < 0) { alert('لطفا یک قیمت معتبر وارد کنید.'); return; }
+            toggleButtonLoading(e.target, true, 'ذخیره');
+            try { await setDoc(doc(db, 'quiz_settings', quizId), { price: newPrice }, { merge: true }); } 
+            catch (error) { console.error("Error updating price:", error); alert('خطا در به‌روزرسانی قیمت.'); } 
+            finally { toggleButtonLoading(e.target, false, 'ذخیره'); }
+        }
+
+        function renderAdminDiscounts() {
+            const container = document.getElementById('admin-discounts-container');
+            if (!container) return;
+            container.innerHTML = `<div class="p-6 bg-white border rounded-lg mb-6 animate-slide-up"><h3 class="text-lg font-bold mb-4">ایجاد کد تخفیف جدید</h3><form id="create-discount-form" class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="discount-code" class="block text-sm font-medium text-gray-700">کد تخفیف (مثال: BAHAR1405)</label><input type="text" id="discount-code" class="input-field mt-1" required></div><div><label for="discount-percentage" class="block text-sm font-medium text-gray-700">درصد تخفیف (مثال: 20)</label><input type="number" id="discount-percentage" class="input-field mt-1" min="1" max="100" required></div></div><div><p class="block text-sm font-medium text-gray-700 mb-2">آزمون‌های مورد نظر را انتخاب کنید:</p><div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${Object.entries(allQuizzes).map(([quizId, quizData]) => `<label class="flex items-center space-x-2 rtl:space-x-reverse"><input type="checkbox" name="applicableQuizzes" value="${quizId}" class="form-checkbox h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"><span>${quizData.title}</span></label>`).join('')}</div></div><div class="text-left"><button type="submit" class="btn btn-primary">ایجاد کد</button></div></form></div><div><h3 class="text-lg font-bold mb-4">کدهای تخفیf موجود</h3><div id="existing-discounts-list" class="space-y-3"></div></div>`;
+            const listContainer = document.getElementById('existing-discounts-list');
+            if (discounts.length > 0) listContainer.innerHTML = discounts.map((d, index) => `<div class="p-4 bg-gray-50 border rounded-lg flex justify-between items-center animate-stagger-item" style="animation-delay: ${index * 50}ms"><div><p class="font-mono font-bold text-purple-600">${d.code}</p><p class="text-sm text-gray-600">${d.percentage}% تخفیف برای ${d.applicableQuizzes.length} آزمون</p></div><button data-discount-id="${d.id}" class="btn bg-red-500 hover:bg-red-600 text-sm py-1 px-3 delete-discount-btn">حذف</button></div>`).join('');
+            else listContainer.innerHTML = '<p class="text-gray-500">هیچ کد تخفیفی وجود ندارد.</p>';
+            document.getElementById('create-discount-form').addEventListener('submit', handleCreateDiscount);
+            document.querySelectorAll('.delete-discount-btn').forEach(btn => btn.addEventListener('click', handleDeleteDiscount));
+        }
+
+        async function handleCreateDiscount(e) {
+            e.preventDefault();
+            const code = document.getElementById('discount-code').value.trim().toUpperCase();
+            const percentage = parseInt(document.getElementById('discount-percentage').value);
+            const applicableQuizzes = Array.from(document.querySelectorAll('input[name="applicableQuizzes"]:checked')).map(cb => cb.value);
+            if (!code || !percentage || applicableQuizzes.length === 0) { alert('لطفا تمام فیلدها را پر کنید و حداقل یک آزمون انتخاب نمایید.'); return; }
+            try { await addDoc(collection(db, 'discount_codes'), { code, percentage, applicableQuizzes }); e.target.reset(); } 
+            catch (error) { console.error("Error creating discount:", error); alert('خطا در ایجاد کد تخفیف.'); }
+        }
+
+        async function handleDeleteDiscount(e) {
+            const discountId = e.target.dataset.discountId;
+            try { await deleteDoc(doc(db, 'discount_codes', discountId)); } 
+            catch (error) { console.error("Error deleting discount:", error); }
+        }
+
+        async function handleApplyDiscount(quizId) {
+            const code = document.getElementById('discount-code-input').value.trim().toUpperCase();
+            const feedbackEl = document.getElementById('discount-feedback'), amountEl = document.getElementById('payment-amount');
+            const originalPrice = quizSettings[quizId]?.price ?? allQuizzes[quizId].price;
+            if (!code) { feedbackEl.textContent = 'لطفا یک کد وارد کنید.'; feedbackEl.className = 'text-sm mt-2 h-5 text-red-500'; return; }
+            try {
+                const querySnapshot = await getDocs(query(collection(db, 'discount_codes'), where("code", "==", code)));
+                if (querySnapshot.empty) { throw new Error('نامعتبر'); }
+                const discountDoc = querySnapshot.docs[0].data();
+                if (discountDoc.applicableQuizzes.includes(quizId)) {
+                    const newPrice = originalPrice * (1 - discountDoc.percentage / 100);
+                    amountEl.innerHTML = `<span class="line-through text-gray-500 text-2xl">${originalPrice.toLocaleString('fa-IR')}</span> ${Math.round(newPrice).toLocaleString('fa-IR')} تومان`;
+                    feedbackEl.textContent = `تخفیف ${discountDoc.percentage}% با موفقیت اعمال شد.`;
+                    feedbackEl.className = 'text-sm mt-2 h-5 text-green-600';
+                } else { throw new Error('برای این آزمون معتبر نیست'); }
+            } catch (error) {
+                feedbackEl.textContent = error.message.includes('نامعتبر') ? 'کد تخفیف نامعتبر است.' : 'این کد برای آزمون انتخاب شده معتبر نیست.';
+                feedbackEl.className = 'text-sm mt-2 h-5 text-red-500';
+                amountEl.textContent = `${originalPrice.toLocaleString('fa-IR')} تومان`;
+                console.error("Error applying discount:", error);
+            }
+        }
+
         function listenForAdminPayments() {
-            const paymentsCollection = collection(db, `artifacts/${appId}/public/data/payments`);
-            const q = query(paymentsCollection, where("status", "==", "pending"));
-            unsubscribeAdminListener = onSnapshot(q, (snapshot) => {
-                const container = document.getElementById('pending-payments-container');
-                if(!container) return;
-                if (snapshot.empty) {
-                    container.innerHTML = '<p class="text-gray-500">هیچ پرداخت در انتظار تاییدی وجود ندارد.</p>';
-                    return;
-                }
-                container.innerHTML = snapshot.docs.map(doc => {
-                    const payment = { id: doc.id, ...doc.data() };
-                    return `
-                        <div class="grid grid-cols-4 gap-4 items-center p-3 bg-white border rounded-lg">
+            unsubscribeAdminListener = onSnapshot(collection(db, 'payments'), (snapshot) => {
+                const pendingContainer = document.getElementById('pending-payments-container');
+                const approvedContainer = document.getElementById('approved-payments-container');
+                if(!pendingContainer || !approvedContainer) return;
+
+                const allPayments = snapshot.docs.map(doc => ({ id: doc.id, ...sanitizeObjectKeys(doc.data()) }));
+                
+                // PENDING PAYMENTS
+                const pendingPayments = allPayments.filter(p => p.status === 'pending');
+                 pendingPayments.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+                
+                if (pendingPayments.length === 0) {
+                    pendingContainer.innerHTML = '<p class="text-gray-500">هیچ پرداخت در انتظار تاییدی وجود ندارد.</p>';
+                } else {
+                    pendingContainer.innerHTML = pendingPayments.map((payment, index) => `
+                        <div class="p-4 bg-white border rounded-lg space-y-2 sm:grid sm:grid-cols-4 sm:gap-4 sm:items-center sm:space-y-0 animate-stagger-item" style="animation-delay: ${index * 50}ms">
                             <div><p class="font-bold">${payment.userName}</p><p class="text-xs text-gray-500">${payment.userEmail}</p></div>
                             <div><p class="font-semibold">${payment.quizTitle}</p></div>
-                            <div><p class="text-sm">کد رهگیری: <span class="font-mono">${payment.transactionRef}</span></p></div>
-                            <div class="text-left"><button data-payment-id="${payment.id}" class="btn bg-green-500 hover:bg-green-600 approve-payment-btn text-sm py-1 px-3">تایید</button></div>
+                            <div><p class="text-sm font-mono">${payment.transactionRef}</p></div>
+                            <div class="pt-2 sm:pt-0 sm:text-left"><button data-payment-id="${payment.id}" class="btn bg-green-500 hover:bg-green-600 approve-payment-btn text-sm py-1 px-3">تایید</button></div>
+                        </div>`).join('');
+                    document.querySelectorAll('.approve-payment-btn').forEach(btn => btn.addEventListener('click', handleApprovePayment));
+                }
+
+                // APPROVED PAYMENTS
+                const approvedPayments = allPayments.filter(p => p.status === 'approved');
+                approvedPayments.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+                
+                if (approvedPayments.length === 0) {
+                    approvedContainer.innerHTML = '<p class="text-gray-500">هیچ پرداخت تایید شده‌ای وجود ندارد.</p>';
+                } else {
+                     approvedContainer.innerHTML = approvedPayments.map((payment, index) => {
+                        const paymentDate = new Date(payment.timestamp.seconds * 1000).toLocaleDateString('fa-IR');
+                        return `
+                        <div class="p-4 bg-white border rounded-lg space-y-2 sm:grid sm:grid-cols-4 sm:gap-4 sm:items-center sm:space-y-0 animate-stagger-item" style="animation-delay: ${index * 50}ms">
+                            <div><p class="font-bold">${payment.userName}</p><p class="text-xs text-gray-500">${payment.userEmail}</p></div>
+                            <div><p class="font-semibold">${payment.quizTitle}</p></div>
+                            <div><p class="text-sm font-mono">${payment.transactionRef}</p></div>
+                            <div class="sm:text-left"><p class="text-sm text-green-600 font-semibold">تایید شده در: ${paymentDate}</p></div>
                         </div>`;
-                }).join('');
-                document.querySelectorAll('.approve-payment-btn').forEach(btn => btn.addEventListener('click', handleApprovePayment));
+                    }).join('');
+                }
+
+                // Add event listeners for subtabs
+                document.querySelectorAll('.payment-subtab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.payment-subtab-btn').forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                        
+                        const subtab = e.currentTarget.dataset.subtab;
+                        if (subtab === 'pending') {
+                            pendingContainer.classList.remove('hidden');
+                            approvedContainer.classList.add('hidden');
+                        } else {
+                            pendingContainer.classList.add('hidden');
+                            approvedContainer.classList.remove('hidden');
+                        }
+                    });
+                });
+
+                // Set the default active tab if none is active
+                if (!document.querySelector('.payment-subtab-btn.active')) {
+                     document.querySelector('.payment-subtab-btn[data-subtab="pending"]').classList.add('active');
+                }
             });
         }
         
         async function handleApprovePayment(e) {
-            const btn = e.target;
-            const paymentId = btn.dataset.paymentId;
+            const btn = e.target, paymentId = btn.dataset.paymentId;
             toggleButtonLoading(btn, true, 'تایید');
-            try {
-                const paymentDocRef = doc(db, `artifacts/${appId}/public/data/payments`, paymentId);
-                await updateDoc(paymentDocRef, { status: 'approved' });
-                alert('پرداخت با موفقیت تایید شد.');
-            } catch (error) {
-                console.error("Error approving payment:", error);
-                alert("خطا در تایید پرداخت. لطفاً کنسول را بررسی کنید.");
-                toggleButtonLoading(btn, false, 'تایید');
-            }
+            try { await updateDoc(doc(db, 'payments', paymentId), { status: 'approved' }); alert('پرداخت با موفقیت تایید شد.'); } 
+            catch (error) { console.error("Error approving payment:", error); alert("خطا در تایید پرداخت."); toggleButtonLoading(btn, false, 'تایید'); }
         }
 
         function listenForAdminResults() {
-             const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
-             unsubscribeAdminListener = onSnapshot(resultsCollection, (snapshot) => {
+             unsubscribeAdminListener = onSnapshot(collection(db, 'quiz_results'), (snapshot) => {
                 const filterSelect = document.getElementById('quiz-filter');
                 if(!filterSelect) return;
-                const allResults = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                const allResults = snapshot.docs.map(doc => ({id: doc.id, ...sanitizeObjectKeys(doc.data())}));
                 const quizzesInDb = [...new Set(allResults.map(r => r.quizId))].filter(id => allQuizzes[id]);
-                const currentFilter = filterSelect.value;
-                filterSelect.innerHTML = quizzesInDb.map(id => `<option value="${id}" ${id === currentFilter ? 'selected' : ''}>${allQuizzes[id].title}</option>`).join('');
+                filterSelect.innerHTML = quizzesInDb.map(id => `<option value="${id}">${allQuizzes[id].title}</option>`).join('');
                 if (quizzesInDb.length === 0) filterSelect.innerHTML = `<option>هنوز نتیجه‌ای ثبت نشده</option>`;
                 
                 const displayQuizResults = (quizId) => {
                     const tableBody = document.getElementById('results-table-body'), statsCards = document.getElementById('admin-stats-cards'), analysisContainer = document.getElementById('question-analysis-container');
                     if (!tableBody || !statsCards || !analysisContainer) return;
-                    if(!quizId) { statsCards.innerHTML = ''; tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">لطفا یک آزمون را انتخاب کنید.</td></tr>`; analysisContainer.innerHTML = ''; return; }
+                    if(!quizId) { tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4">لطفا یک آزمون را انتخاب کنید.</td></tr>`; return; }
                     const resultsForQuiz = allResults.filter(r => r.quizId === quizId);
-                    if (resultsForQuiz.length === 0) { statsCards.innerHTML = ''; tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">هنوز نتیجه‌ای برای این آزمون ثبت نشده.</td></tr>`; analysisContainer.innerHTML = ''; return; }
+                    if (resultsForQuiz.length === 0) { tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4">هنوز نتیجه‌ای برای این آزمون ثبت نشده.</td></tr>`; return; }
                     const totalParticipants = resultsForQuiz.length, avgPercentage = resultsForQuiz.reduce((acc, r) => acc + r.percentage, 0) / totalParticipants;
-                    statsCards.innerHTML = `<div class="p-4 bg-purple-50 rounded-lg text-center"><p class="text-sm font-semibold text-purple-800">تعداد شرکت‌کنندگان</p><p class="text-2xl font-bold text-purple-600">${totalParticipants}</p></div><div class="p-4 bg-green-50 rounded-lg text-center"><p class="text-sm font-semibold text-green-800">میانگین درصد</p><p class="text-2xl font-bold text-green-600">${avgPercentage.toFixed(2)}%</p></div>`;
+                    statsCards.innerHTML = `<div class="p-4 bg-white rounded-xl shadow-md text-center animate-slide-up"><p class="text-sm font-semibold text-gray-500">تعداد شرکت‌کنندگان</p><p class="text-3xl font-bold text-purple-600 mt-1">${totalParticipants}</p></div><div class="p-4 bg-white rounded-xl shadow-md text-center animate-slide-up" style="animation-delay: 100ms;"><p class="text-sm font-semibold text-gray-500">میانگین درصد</p><p class="text-3xl font-bold text-green-600 mt-1">${avgPercentage.toFixed(2)}%</p></div>`;
                     resultsForQuiz.sort((a, b) => b.score - a.score);
-                    tableBody.innerHTML = resultsForQuiz.map((res, index) => `
-                        <tr class="bg-white border-b"><td class="px-6 py-4 font-medium">${index + 1}</td><td class="px-6 py-4">${res.name}</td><td class="px-6 py-4">${res.percentage.toFixed(2)}%</td><td class="px-6 py-4">${res.potentialPercentage.toFixed(2)}%</td><td class="px-6 py-4 text-center">${res.adClicked ? '<span class="text-green-500 font-bold">✔️</span>' : '<span class="text-red-500">❌</span>'}</td></tr>`
-                    ).join('');
+                    tableBody.innerHTML = resultsForQuiz.map((res, index) => `<tr class="hover:bg-gray-50 transition-colors animate-stagger-item" style="animation-delay: ${index * 50}ms"><td class="px-6 py-4 font-medium">${index + 1}</td><td class="px-6 py-4">${res.name}</td><td class="px-6 py-4">${res.percentage.toFixed(2)}%</td><td class="px-6 py-4">${res.potentialPercentage.toFixed(2)}%</td><td class="px-6 py-4 text-center">${res.adClicked ? '<span class="text-green-500 font-bold">✔️</span>' : '<span class="text-red-500">❌</span>'}</td><td class="px-6 py-4"><button data-result-id="${res.id}" class="btn btn-primary text-xs !py-1 !px-3 view-admin-report-btn">مشاهده</button></td></tr>`).join('');
+                    document.querySelectorAll('.view-admin-report-btn').forEach(btn => btn.addEventListener('click', (e) => displayResults(allResults.find(r => r.id === e.currentTarget.dataset.resultId), 'admin')));
                     const quizData = allQuizzes[quizId];
-                    analysisContainer.innerHTML = quizData.questions.map((q, index) => {
-                        const answers = resultsForQuiz.map(r => r.answers[index]);
-                        const counts = [0, 0, 0, 0];
-                        answers.forEach(ans => { if (ans !== null && ans >= 0 && ans < 4) counts[ans]++; });
-                        const totalAnswers = answers.filter(a => a !== null).length || 1;
-                        const percentages = counts.map(c => (c / totalAnswers) * 100);
-                        return `
-                            <div>
-                                <p class="font-semibold mb-2">${index + 1}. ${q.question}</p>
-                                <div class="space-y-1">${percentages.map((p, i) => `
-                                    <div class="flex items-center text-xs gap-4">
-                                        <div class="flex-1">${q.options[i]} (${counts[i]})</div>
-                                        <div class="w-1/2 bg-gray-200 rounded-full h-4">
-                                            <div class="h-4 ${i === q.correctAnswer ? 'bg-green-500' : 'bg-purple-500'}" style="width: ${p.toFixed(1)}%">${p > 10 ? p.toFixed(0)+'%' : ''}</div>
-                                        </div>
-                                    </div>`).join('')}
-                                </div>
-                            </div>`;
-                    }).join('');
+                    analysisContainer.innerHTML = quizData.questions.map((q, index) => `<div><p class="font-semibold mb-2">${index + 1}. ${q.question}</p><div class="space-y-1">${q.options.map((opt, i) => `<div class="flex items-center text-xs gap-4"><div class="flex-1">${opt} (${resultsForQuiz.filter(r => r.answers[index] === i).length})</div><div class="w-1/2 bg-gray-200 rounded-full h-4"><div class="h-4 ${i === q.correctAnswer ? 'bg-green-500' : 'bg-purple-500'}" style="width: ${((resultsForQuiz.filter(r => r.answers[index] === i).length / (resultsForQuiz.filter(r=>r.answers[index]!==null).length || 1)) * 100).toFixed(1)}%"></div></div></div>`).join('')}</div></div>`).join('');
                 };
                 filterSelect.addEventListener('change', (e) => displayQuizResults(e.target.value));
                 displayQuizResults(filterSelect.value || (quizzesInDb.length > 0 ? quizzesInDb[0] : null));
@@ -754,7 +910,7 @@
         // --- QUIZ AND RESULT LOGIC ---
         function startQuiz(quizId) {
             const quizData = allQuizzes[quizId];
-            quizState = { quizId, currentQuestionIndex: 0, userAnswers: new Array(quizData.questions.length).fill(null), totalTimer: null, questionTimer: null, totalTimeRemaining: quizData.duration * 60, questionTimeRemaining: quizData.questionDuration, };
+            quizState = { quizId, currentQuestionIndex: 0, userAnswers: new Array(quizData.questions.length).fill(null), totalTimer: null, totalTimeRemaining: quizData.duration * 60 };
             renderView('quiz', { quizId });
             renderQuestion();
             startTimers();
@@ -767,95 +923,96 @@
             document.getElementById('question-text').textContent = question.question;
             const optionsContainer = document.getElementById('options-container');
             optionsContainer.innerHTML = question.options.map((option, index) => `<div class="option" data-option-index="${index}">${option}</div>`).join('');
-            document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', (e) => { document.querySelectorAll('.option').forEach(o => o.classList.remove('selected')); e.currentTarget.classList.add('selected'); }));
-            const nextBtn = document.getElementById('next-btn');
-            if (quizState.currentQuestionIndex === quizData.questions.length - 1) {
-                nextBtn.textContent = 'ثبت و پایان آزمون';
-            } else {
-                nextBtn.textContent = 'ثبت و سوال بعدی';
+            
+            const previouslySelected = quizState.userAnswers[quizState.currentQuestionIndex];
+            if (previouslySelected !== null) {
+                const selectedEl = optionsContainer.querySelector(`[data-option-index="${previouslySelected}"]`);
+                if (selectedEl) selectedEl.classList.add('selected');
             }
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    const clickedOption = e.currentTarget;
+                    const optionIndex = parseInt(clickedOption.dataset.optionIndex);
+
+                    if (clickedOption.classList.contains('selected')) {
+                        // If it's already selected, deselect it
+                        clickedOption.classList.remove('selected');
+                        quizState.userAnswers[quizState.currentQuestionIndex] = null;
+                    } else {
+                        // If it's not selected, select it (and deselect others)
+                        document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+                        clickedOption.classList.add('selected');
+                        quizState.userAnswers[quizState.currentQuestionIndex] = optionIndex;
+                    }
+                });
+            });
+
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('previous-btn');
+            
+            prevBtn.disabled = quizState.currentQuestionIndex === 0;
+
+            if (quizState.currentQuestionIndex === quizData.questions.length - 1) {
+                nextBtn.textContent = 'پایان آزمون';
+            } else {
+                nextBtn.textContent = 'سوال بعدی';
+            }
+
             updateProgressBar();
         }
         
         function updateProgressBar() {
-            const quizData = allQuizzes[quizState.quizId];
-            const progress = ((quizState.currentQuestionIndex + 1) / quizData.questions.length) * 100;
-            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-bar').style.width = `${((quizState.currentQuestionIndex + 1) / allQuizzes[quizState.quizId].questions.length) * 100}%`;
         }
 
         function startTimers() {
-            const quizData = allQuizzes[quizState.quizId];
-            const totalTimerEl = document.getElementById('timer'), questionTimerEl = document.getElementById('question-timer');
+            const totalTimerEl = document.getElementById('timer');
             quizState.totalTimer = setInterval(() => {
                 quizState.totalTimeRemaining--;
-                const minutes = Math.floor(quizState.totalTimeRemaining / 60), seconds = quizState.totalTimeRemaining % 60;
+                const minutes = Math.floor(quizState.totalTimeRemaining / 60);
+                const seconds = quizState.totalTimeRemaining % 60;
                 if (totalTimerEl) totalTimerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 if (quizState.totalTimeRemaining <= 0) finishQuiz();
             }, 1000);
-            const resetQuestionTimer = () => {
-                clearInterval(quizState.questionTimer);
-                quizState.questionTimeRemaining = quizData.questionDuration;
-                if(questionTimerEl) questionTimerEl.textContent = `00:${String(quizState.questionTimeRemaining).padStart(2, '0')}`;
-                quizState.questionTimer = setInterval(() => {
-                    quizState.questionTimeRemaining--;
-                    if (questionTimerEl) questionTimerEl.textContent = `00:${String(quizState.questionTimeRemaining).padStart(2, '0')}`;
-                    if (quizState.questionTimeRemaining <= 0) handleNextQuestion(false);
-                }, 1000);
-            };
-            resetQuestionTimer();
-            quizState.resetQuestionTimer = resetQuestionTimer;
         }
 
-        function handleNextQuestion(isAnswered) {
-            if (isAnswered) {
-                const selectedOption = document.querySelector('.option.selected');
-                quizState.userAnswers[quizState.currentQuestionIndex] = selectedOption ? parseInt(selectedOption.dataset.optionIndex) : null;
-            }
-            quizState.currentQuestionIndex++;
+        function handleNextQuestion() {
             const quizData = allQuizzes[quizState.quizId];
-            if (quizState.currentQuestionIndex < quizData.questions.length) {
+            if (quizState.currentQuestionIndex < quizData.questions.length - 1) {
+                quizState.currentQuestionIndex++;
                 renderQuestion();
-                quizState.resetQuestionTimer();
             } else {
                 finishQuiz();
             }
         }
 
+        function handlePreviousQuestion() {
+            if (quizState.currentQuestionIndex > 0) {
+                quizState.currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
         async function finishQuiz() {
             clearInterval(quizState.totalTimer);
-            clearInterval(quizState.questionTimer);
             const quizData = allQuizzes[quizState.quizId];
             let correct = 0, incorrect = 0;
-            quizState.userAnswers.forEach((answer, index) => {
-                if (answer !== null) {
-                    if (answer === quizData.questions[index].correctAnswer) correct++;
-                    else incorrect++;
-                }
-            });
+            quizState.userAnswers.forEach((answer, index) => { if (answer !== null) { if (answer === quizData.questions[index].correctAnswer) correct++; else incorrect++; } });
             const unanswered = quizData.questions.length - (correct + incorrect);
             const score = (correct * 3) - incorrect;
             const percentage = (score / (quizData.questions.length * 3)) * 100;
-            const potentialScore = correct * 3;
-            const potentialPercentage = (potentialScore / (quizData.questions.length * 3)) * 100;
-            const resultData = {
-                quizId: quizState.quizId, userId: currentUser.uid, userEmail: currentUser.email, name: userProfile.name,
-                answers: quizState.userAnswers, correct, incorrect, unanswered, score,
-                percentage: Math.max(0, percentage), potentialPercentage: Math.max(0, potentialPercentage),
-                totalQuestions: quizData.questions.length, adClicked: false, timestamp: Timestamp.now()
-            };
-            const docRef = await addDoc(collection(db, `artifacts/${appId}/public/data/quiz_results`), resultData);
+            const resultData = { quizId: quizState.quizId, userId: currentUser.uid, userEmail: currentUser.email, name: userProfile.name, answers: quizState.userAnswers, correct, incorrect, unanswered, score, percentage: Math.max(0, percentage), potentialPercentage: Math.max(0, (correct * 3 / (quizData.questions.length * 3)) * 100), totalQuestions: quizData.questions.length, adClicked: false, timestamp: Timestamp.now() };
+            const docRef = await addDoc(collection(db, 'quiz_results'), resultData);
             resultData.id = docRef.id;
-            displayResults(resultData);
+            displayResults(resultData, 'student');
         }
 
-        async function displayResults(resultData) {
-            const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
-            const q = query(resultsCollection, where("quizId", "==", resultData.quizId));
-            const snapshot = await getDocs(q);
-            const allScoresForThisQuiz = snapshot.docs.map(doc => doc.data().score);
-            allScoresForThisQuiz.sort((a, b) => b - a);
+        async function displayResults(resultData, origin = 'student') {
+            const snapshot = await getDocs(query(collection(db, 'quiz_results'), where("quizId", "==", resultData.quizId)));
+            const allScoresForThisQuiz = snapshot.docs.map(doc => doc.data().score).sort((a, b) => b - a);
             const rank = allScoresForThisQuiz.indexOf(resultData.score) + 1;
-            renderView('result', { resultData, rank: `${rank} از ${allScoresForThisQuiz.length}` });
+            renderView('result', { resultData, rank: `${rank} از ${allScoresForThisQuiz.length}`, origin });
         }
         
         function renderQuestionReview(resultData) {
@@ -869,18 +1026,7 @@
                     if (userAnswer === q.correctAnswer) { statusClass = 'bg-green-100 text-green-800'; statusText = 'پاسخ صحیح'; } 
                     else { statusClass = 'bg-red-100 text-red-800'; statusText = 'پاسخ غلط'; }
                 }
-                return `
-                    <div class="p-4 border rounded-lg bg-white">
-                        <div class="flex justify-between items-center mb-3"><p class="font-bold">سوال ${index + 1}</p><span class="text-xs font-semibold px-2 py-1 rounded-full ${statusClass}">${statusText}</span></div>
-                        <p class="mb-4">${q.question}</p>
-                        <div class="space-y-2 text-sm">${q.options.map((opt, i) => {
-                            let optionClass = 'border-gray-200';
-                            if (i === q.correctAnswer) optionClass = 'border-green-500 bg-green-50';
-                            if (i === userAnswer && userAnswer !== q.correctAnswer) optionClass = 'border-red-500 bg-red-50';
-                            return `<div class="p-3 border rounded-md ${optionClass}">${opt}</div>`;
-                        }).join('')}</div>
-                        <div class="mt-4 pt-4 border-t text-sm text-purple-800 bg-purple-50 p-3 rounded-md"><p><strong class="font-semibold">پاسخ تشریحی:</strong> ${q.explanation}</p></div>
-                    </div>`;
+                return `<div class="p-4 border rounded-lg bg-white"><div class="flex justify-between items-center mb-3"><p class="font-bold">سوال ${index + 1}</p><span class="text-xs font-semibold px-2 py-1 rounded-full ${statusClass}">${statusText}</span></div><p class="mb-4">${q.question}</p><div class="space-y-2 text-sm">${q.options.map((opt, i) => `<div class="p-3 border rounded-md ${i === q.correctAnswer ? 'border-green-500 bg-green-50' : (i === userAnswer ? 'border-red-500 bg-red-50' : 'border-gray-200')}">${opt}</div>`).join('')}</div><div class="mt-4 pt-4 border-t text-sm text-purple-800 bg-purple-50 p-3 rounded-md"><p><strong class="font-semibold">پاسخ تشریحی:</strong> ${q.explanation}</p></div></div>`;
             }).join('');
         }
 
